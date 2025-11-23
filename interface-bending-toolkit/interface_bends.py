@@ -6,7 +6,7 @@ import random
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Dict
 
@@ -350,14 +350,17 @@ def log_run(
     meta: Dict[str, Any],
     iterations: List[Dict[str, Any]],
     tag: Optional[str] = None,
-) -> None:
+    outdir: Optional[str] = None,
+) -> Path:
     """
-    Write a JSON log file to runs/ with timestamp, command, meta, and iterations.
+    Write a JSON log file with timestamp, command, meta, and iterations.
+
+    Returns the path to the log file.
     """
-    runs_dir = Path("runs")
+    runs_dir = Path(outdir or "runs")
     runs_dir.mkdir(exist_ok=True)
 
-    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     base = f"{ts}_{command_name}"
     if tag:
         base += f"_{sanitize_tag(tag)}"
@@ -376,6 +379,228 @@ def log_run(
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print(f"\n[log] wrote {filename}", file=sys.stderr)
+    return filename
+
+
+def generate_demo_runs(outdir: Path, tag: Optional[str]) -> List[Path]:
+    """
+    Build a couple of synthetic run logs so users can render reports without
+    hitting a model endpoint. Returns the written paths.
+    """
+    rng = random.Random(42)
+    written: List[Path] = []
+
+    # Demo: interface experiment scripts
+    demo_iters = []
+    for exp in INTERFACE_EXPERIMENTS[:2]:
+        demo_iters.append(
+            {
+                "experiment": exp.name,
+                "title": exp.title,
+                "prompt": build_interface_experiment_prompt(
+                    exp, audience="gallery wall", fmt="protocol"
+                ),
+                "output": (
+                    f"[Sample script for {exp.title}]\n"
+                    f"1. Name the interface as {exp.interface_signal}.\n"
+                    f"2. Stage the ritual: {exp.ritual}.\n"
+                    f"3. Probe: {exp.probes[0]}"
+                ),
+                "temperature": 0.8,
+                "seed": 101,
+                "format": "protocol",
+                "audience": "gallery wall",
+            }
+        )
+
+    meta = {"provider": "demo", "model": "offline-sample"}
+    written.append(
+        log_run(
+            "interface-experiments", meta, demo_iters, tag=tag, outdir=str(outdir)
+        )
+    )
+
+    # Demo: interface jitter timeline
+    tokens = [
+        "Interface", "contact", "as", "diagram", "and", "friction:", "listen,", "tilt,", "refuse.",
+    ]
+    delays = []
+    elapsed = 0.0
+    for tok in tokens:
+        delay = round(0.08 + rng.random() * 0.07, 3)
+        delays.append(
+            {
+                "token": tok,
+                "delay": delay,
+                "offset_start": elapsed,
+                "offset_end": elapsed + delay,
+            }
+        )
+        elapsed += delay
+
+    jitter_iterations = [
+        {
+            "step": 1,
+            "prompt": "Stage 1 demo: render interface contact as a timed chant.",
+            "output": " ".join(tokens),
+            "temperature": 0.7,
+            "seed": 303,
+            "pattern": "punctuated",
+            "min_delay": 0.08,
+            "max_delay": 0.15,
+            "pre_silence": 0.0,
+            "delays": delays,
+            "delay_summary": {
+                "count": len(delays),
+                "min": min(d["delay"] for d in delays),
+                "max": max(d["delay"] for d in delays),
+                "avg": sum(d["delay"] for d in delays) / len(delays),
+                "total_elapsed": elapsed,
+            },
+        }
+    ]
+
+    written.append(
+        log_run(
+            "interface-jitter",
+            meta,
+            jitter_iterations,
+            tag=tag,
+            outdir=str(outdir),
+        )
+    )
+
+    return written
+
+
+def plot_jitter_chart(
+    delays: List[Dict[str, Any]],
+    output_path: Path,
+    title: str,
+) -> Optional[Path]:
+    """
+    Render a dual-axis chart of per-token delay values and cumulative offsets.
+    Returns the saved path or None if matplotlib is unavailable.
+    """
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print(
+            "matplotlib is not installed; skipping jitter timeline chart.",
+            file=sys.stderr,
+        )
+        return None
+
+    if not delays:
+        return None
+
+    indices = list(range(1, len(delays) + 1))
+    delay_values = [d.get("delay", 0.0) for d in delays]
+    offsets = [d.get("offset_end", d.get("offset_start", 0.0)) for d in delays]
+
+    fig, ax1 = plt.subplots(figsize=(8, 4))
+    ax1.plot(indices, delay_values, marker="o", color="#4e79a7", label="Delay (s)")
+    ax1.set_xlabel("Token index")
+    ax1.set_ylabel("Delay (s)", color="#4e79a7")
+    ax1.tick_params(axis="y", labelcolor="#4e79a7")
+    ax1.grid(True, linestyle="--", alpha=0.3)
+
+    ax2 = ax1.twinx()
+    ax2.plot(indices, offsets, marker="x", color="#f28e2c", label="Cumulative (s)")
+    ax2.set_ylabel("Cumulative time (s)", color="#f28e2c")
+    ax2.tick_params(axis="y", labelcolor="#f28e2c")
+
+    fig.suptitle(title)
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def render_dissertation_report(args: argparse.Namespace, config: Dict[str, Any]) -> None:
+    """
+    Build a dissertation-friendly packet from existing runs, including Markdown
+    summaries and timeline images when available.
+    """
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    run_paths = [Path(p) for p in args.runs] if args.runs else sorted(Path("runs").glob("*.json"))
+    if args.demo:
+        run_paths.extend(generate_demo_runs(outdir, tag=args.tag))
+
+    if not run_paths:
+        print(
+            "No run logs found. Provide --runs or use --demo to synthesize examples.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    report_lines = [
+        "# Interface bend experiment report",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+        "",
+    ]
+
+    for run_path in run_paths:
+        with run_path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        command = data.get("command", "unknown")
+        ts = data.get("timestamp", "")
+        meta = data.get("meta", {})
+        iterations = data.get("iterations", [])
+
+        report_lines.append(f"## {ts} — {command}")
+        report_lines.append(f"- Source log: {run_path}")
+        report_lines.append(
+            f"- Model: {meta.get('model', '?')} ({meta.get('provider', 'unknown')})"
+        )
+        report_lines.append(f"- Iterations: {len(iterations)}")
+
+        if command == "interface-experiments":
+            exp_detail_lines = ["# Interface experiment scripts", ""]
+            for idx, it in enumerate(iterations, start=1):
+                exp_title = it.get("title", f"Experiment {idx}")
+                exp_detail_lines.append(f"## {idx}. {exp_title}")
+                exp_detail_lines.append(f"Prompt seed: {it.get('prompt', '')}\n")
+                exp_detail_lines.append(it.get("output", ""))
+                exp_detail_lines.append("")
+
+            detail_path = outdir / f"{run_path.stem}_experiments.md"
+            detail_path.write_text("\n".join(exp_detail_lines), encoding="utf-8")
+            report_lines.append(f"- Scripts written to: {detail_path}")
+
+        if command == "interface-jitter":
+            delays = iterations[0].get("delays", []) if iterations else []
+            stats = iterations[0].get("delay_summary", {}) if iterations else {}
+            delay_line = "- Delay stats unavailable"
+            if stats:
+                delay_line = (
+                    f"- Delay stats: avg {stats.get('avg', 0):.3f}s; "
+                    f"min {stats.get('min', 0):.3f}s; "
+                    f"max {stats.get('max', 0):.3f}s; "
+                    f"total {stats.get('total_elapsed', 0):.2f}s"
+                )
+            report_lines.append(delay_line)
+
+            chart_path = plot_jitter_chart(
+                delays,
+                outdir / f"{run_path.stem}_timeline.{args.chart_format}",
+                title=f"{run_path.stem} — interface jitter",
+            )
+            if chart_path:
+                report_lines.append(f"- Timeline chart: {chart_path}")
+
+        report_lines.append("")
+
+    report_path = outdir / (args.report_name or "dissertation_report.md")
+    report_path.write_text("\n".join(report_lines), encoding="utf-8")
+    print(f"[report] wrote {report_path}")
 
 
 # --- Bend Implementations ---------------------------------------------------
@@ -617,12 +842,15 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
 
 <<<<<<< ours
 <<<<<<< ours
+<<<<<<< ours
     if args.min_delay < 0 or args.max_delay < 0:
         print("ERROR: --min-delay and --max-delay must be non-negative.", file=sys.stderr)
         sys.exit(1)
 
     if args.min_delay > args.max_delay:
 =======
+=======
+>>>>>>> theirs
 =======
 >>>>>>> theirs
     min_delay = args.min_delay
@@ -634,6 +862,9 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
 
     if min_delay > max_delay:
 <<<<<<< ours
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 =======
 >>>>>>> theirs
@@ -654,7 +885,11 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
     if args.jitter_seed is not None:
         print(f">>> Jitter seed: {args.jitter_seed}")
     print("\n=== JITTERED OUTPUT ===\n")
+<<<<<<< ours
     start_ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+=======
+    start_ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+>>>>>>> theirs
     delays_log: List[Dict[str, Any]] = []
 
     if args.pre_silence > 0:
@@ -930,6 +1165,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="When scrambling, drop the system prompt as well.",
     )
 
+<<<<<<< ours
+=======
+    # Experiment Report
+    p_report = subparsers.add_parser(
+        "experiment-report",
+        help="Render dissertation-friendly assets (markdown + charts) from run logs.",
+    )
+    p_report.add_argument(
+        "--runs",
+        nargs="+",
+        help="Specific run log JSON files to include (default: all in runs/).",
+    )
+    p_report.add_argument(
+        "--outdir",
+        default="runs",
+        help="Directory to write report files and charts (default: runs).",
+    )
+    p_report.add_argument(
+        "--chart-format",
+        choices=["png", "pdf", "svg"],
+        default="png",
+        help="Image format for jitter timelines.",
+    )
+    p_report.add_argument(
+        "--report-name",
+        default=None,
+        help="Filename for the summary markdown (default: dissertation_report.md).",
+    )
+    p_report.add_argument(
+        "--demo",
+        action="store_true",
+        help="Generate synthetic demo runs if none are provided.",
+    )
+
+>>>>>>> theirs
     # Interface Experiment Scripts
     experiment_names = [exp.name for exp in INTERFACE_EXPERIMENTS]
     p_experiments = subparsers.add_parser(
@@ -1014,6 +1284,11 @@ def main(argv: Optional[List[str]] = None) -> None:
         bend_entropy_seed(args, config)
     elif args.command == "context-collapse":
         bend_context_collapse(args, config)
+<<<<<<< ours
+=======
+    elif args.command == "experiment-report":
+        render_dissertation_report(args, config)
+>>>>>>> theirs
     elif args.command == "interface-experiments":
         bend_interface_experiments(args, config)
     elif args.command == "interface-jitter":

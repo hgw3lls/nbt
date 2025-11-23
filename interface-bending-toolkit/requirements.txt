@@ -4,4 +4,5 @@ pyyaml
 transformers
 torch
 scikit-learn
+matplotlib
 
