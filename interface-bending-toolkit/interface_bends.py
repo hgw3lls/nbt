@@ -4,6 +4,7 @@ import sys
 import time
 import random
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -113,6 +114,13 @@ def apply_profile(args: argparse.Namespace) -> Dict[str, Any]:
                 args.min_delay = prof["jitter_min_delay"]
             if getattr(args, "max_delay", None) is None and "jitter_max_delay" in prof:
                 args.max_delay = prof["jitter_max_delay"]
+
+    # If no profile filled these in, fall back to conservative defaults
+    if args.command == "interface-jitter":
+        if args.min_delay is None:
+            args.min_delay = 0.02
+        if args.max_delay is None:
+            args.max_delay = 0.25
 
     else:
         # No valid profile; fall back to hard defaults if still None
@@ -521,11 +529,22 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
     prompt = args.prompt or "Give me a short, vivid description of the city at night."
     system_prompt = args.system_prompt
 
+<<<<<<< ours
     if args.min_delay < 0 or args.max_delay < 0:
         print("ERROR: --min-delay and --max-delay must be non-negative.", file=sys.stderr)
         sys.exit(1)
 
     if args.min_delay > args.max_delay:
+=======
+    min_delay = args.min_delay
+    max_delay = args.max_delay
+
+    if min_delay < 0 or max_delay < 0:
+        print("ERROR: --min-delay and --max-delay must be non-negative.", file=sys.stderr)
+        sys.exit(1)
+
+    if min_delay > max_delay:
+>>>>>>> theirs
         print("ERROR: --min-delay cannot be greater than --max-delay.", file=sys.stderr)
         sys.exit(1)
 
@@ -539,17 +558,65 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
 
     print(">>> Interface Jitter")
     print(f">>> Prompt: {prompt!r}")
+    print(f">>> Pattern: {args.pattern}; pre-silence={args.pre_silence:.2f}s; window=({min_delay:.3f}, {max_delay:.3f})")
+    if args.jitter_seed is not None:
+        print(f">>> Jitter seed: {args.jitter_seed}")
     print("\n=== JITTERED OUTPUT ===\n")
-
-    tokens = text.split(" ")
     start_ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    delays_log: List[Dict[str, Any]] = []
 
-    for tok in tokens:
-        delay = random.uniform(args.min_delay, args.max_delay)
+    if args.pre_silence > 0:
+        time.sleep(args.pre_silence)
+
+    jitter_rng = random.Random(args.jitter_seed)
+
+    def choose_delay(token: str, idx: int, total: int) -> float:
+        span = max_delay - min_delay
+        if args.pattern == "uniform" or total <= 1:
+            return jitter_rng.uniform(min_delay, max_delay)
+        if args.pattern == "ramp-up":
+            return min_delay + span * (idx / (total - 1))
+        if args.pattern == "ramp-down":
+            return max_delay - span * (idx / (total - 1))
+        if args.pattern == "bursty":
+            return max_delay if idx % 3 == 0 else min_delay
+        if args.pattern == "punctuated":
+            base = jitter_rng.uniform(min_delay, max_delay)
+            if token.endswith((".", "!", "?", ";", ":")):
+                return min(max_delay, base + span * 0.4)
+            if token.endswith(","):
+                return min(max_delay, base + span * 0.2)
+            return base
+        return jitter_rng.uniform(min_delay, max_delay)
+
+    tokens = re.findall(r"\S+", text)
+    elapsed = args.pre_silence
+
+    for i, tok in enumerate(tokens):
+        delay = choose_delay(tok, i, len(tokens))
+        delays_log.append(
+            {
+                "token": tok,
+                "delay": delay,
+                "offset_start": elapsed,
+                "offset_end": elapsed + delay,
+            }
+        )
         print(tok, end=" ", flush=True)
         time.sleep(delay)
+        elapsed += delay
 
+    total_elapsed = elapsed
     print("\n\n=== END ===")
+    print(f"Total streamed time (incl. silence): {total_elapsed:.2f}s")
+    if delays_log:
+        actual_min = min(d["delay"] for d in delays_log)
+        actual_max = max(d["delay"] for d in delays_log)
+        avg_delay = sum(d["delay"] for d in delays_log) / len(delays_log)
+        print(
+            f"Delay stats: avg={avg_delay:.3f}s, min={actual_min:.3f}s, max={actual_max:.3f}s "
+            f"over {len(delays_log)} tokens"
+        )
 
     iterations = [
         {
@@ -558,9 +625,20 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
             "output": text,
             "temperature": args.temperature,
             "seed": args.seed,
-            "min_delay": args.min_delay,
-            "max_delay": args.max_delay,
+            "pattern": args.pattern,
+            "min_delay": min_delay,
+            "max_delay": max_delay,
+            "pre_silence": args.pre_silence,
+            "delays": delays_log,
             "start_timestamp": start_ts,
+            "jitter_seed": args.jitter_seed,
+            "delay_summary": {
+                "count": len(delays_log),
+                "min": min(d["delay"] for d in delays_log) if delays_log else 0.0,
+                "max": max(d["delay"] for d in delays_log) if delays_log else 0.0,
+                "avg": (sum(d["delay"] for d in delays_log) / len(delays_log)) if delays_log else 0.0,
+                "total_elapsed": total_elapsed,
+            },
         }
     ]
     meta = {
@@ -708,6 +786,24 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Maximum delay between word prints (seconds).",
+    )
+    p_jitter.add_argument(
+        "--pattern",
+        choices=["uniform", "ramp-up", "ramp-down", "bursty", "punctuated"],
+        default="uniform",
+        help="How to schedule delays across the stream.",
+    )
+    p_jitter.add_argument(
+        "--pre-silence",
+        type=float,
+        default=0.0,
+        help="Optional silent lead-in before streaming begins (seconds).",
+    )
+    p_jitter.add_argument(
+        "--jitter-seed",
+        type=int,
+        default=None,
+        help="Seed for the jitter RNG to make token delays reproducible.",
     )
 
     return parser

@@ -19,4 +19,4 @@ python interface_bends.py --temperature 1.1 context-collapse \
 # 5) Interface Jitter
 python interface_bends.py --temperature 0.9 interface-jitter \
   --prompt "Describe a city seen only through security cameras." \
-  --min-delay 0.01 --max-delay 0.2
+  --min-delay 0.01 --max-delay 0.2 --pattern punctuated --jitter-seed 7
