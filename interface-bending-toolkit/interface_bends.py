@@ -43,6 +43,16 @@ class Runtime:
     hf_pipeline: Any = None   # for HF local, a text-generation pipeline
 
 
+@dataclass
+class InterfaceExperiment:
+    name: str
+    title: str
+    goal: str
+    interface_signal: str
+    ritual: str
+    probes: List[str]
+
+
 def load_yaml_config(path: str) -> Dict[str, Any]:
     """
     Load YAML config from path, or return a default config if not found.
@@ -257,6 +267,82 @@ def call_model(
 def sanitize_tag(tag: str) -> str:
     safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in tag)
     return safe[:40] or "tag"
+
+
+# --- Interface Experiment Library ------------------------------------------
+
+
+INTERFACE_EXPERIMENTS: List[InterfaceExperiment] = [
+    InterfaceExperiment(
+        name="contact-trace",
+        title="Contact Trace Maps",
+        goal=(
+            "Expose how prompts, sliders, and waiting cursors choreograph the user's affect "
+            "before text generation begins."
+        ),
+        interface_signal="Mouse movement, cursor animations, and breathing indicators on input fields",
+        ritual=(
+            "Have the interface wait with the user, exaggerating loading states and inviting them to describe "
+            "their bodily response before pressing enter."
+        ),
+        probes=[
+            "Ask the model to narrate how the waiting state scripts agency in the exchange.",
+            "Swap the waiting animation to a heartbeat-style pulse and log linguistic shifts.",
+            "Alter pointer acceleration mid-wait and capture any changes in tone or pacing.",
+        ],
+    ),
+    InterfaceExperiment(
+        name="diagram-rewrite",
+        title="Interface Diagram Rewrite",
+        goal=(
+            "Treat the UI as a diagram of power; rewrite it to foreground consent and mutual address."
+        ),
+        interface_signal="Form labels, safety notices, and prompt scaffolding",
+        ritual=(
+            "Stage paired prompts: one with default labels, one with rewritten annotations that make "
+            "power explicit (e.g., \"I am requesting\" vs. \"System requires\")."
+        ),
+        probes=[
+            "Log differences in pronoun use and modality between the two interface framings.",
+            "Inject a meta-prompt asking the model to critique the diagrammatic choices it sees.",
+            "Swap only the submission button text to test how a single lever shifts the response register.",
+        ],
+    ),
+    InterfaceExperiment(
+        name="ambient-friction",
+        title="Ambient Friction",
+        goal=(
+            "Bend latency and haptics to surface the labor of generation and resist seamlessness."
+        ),
+        interface_signal="Micro-delays, audible ticks, or vibration cues tied to token release",
+        ritual=(
+            "Interleave fast and slow emissions; ask the model to comment on perceived effort at each swing."
+        ),
+        probes=[
+            "Correlate delay swings with shifts in detail density or affect.",
+            "Record whether acknowledgments of friction increase refusals or hedging language.",
+            "Invite the model to propose a counter-friction pattern and then run it in a second pass.",
+        ],
+    ),
+    InterfaceExperiment(
+        name="stage-one-echo",
+        title="Stage 1 Echo Prompts",
+        goal=(
+            "Mirror 'Stage 1 — Interface Contact' by asking the model to re-describe the contact zone "
+            "before answering the user."
+        ),
+        interface_signal="A preamble prompt that names the interface context and its defaults",
+        ritual=(
+            "Prefix user prompts with a self-description of the interface diagram and ask the model to "
+            "state who is being positioned as agent, subject, and observer."
+        ),
+        probes=[
+            "Measure how often the model re-centers itself versus the user after the echo block.",
+            "Change the self-description wording (tool, host, witness) to see role adoption shifts.",
+            "Log whether the model suppresses uncertainty when the interface names itself as confident.",
+        ],
+    ),
+]
 
 
 def log_run(
@@ -530,12 +616,15 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
     system_prompt = args.system_prompt
 
 <<<<<<< ours
+<<<<<<< ours
     if args.min_delay < 0 or args.max_delay < 0:
         print("ERROR: --min-delay and --max-delay must be non-negative.", file=sys.stderr)
         sys.exit(1)
 
     if args.min_delay > args.max_delay:
 =======
+=======
+>>>>>>> theirs
     min_delay = args.min_delay
     max_delay = args.max_delay
 
@@ -544,6 +633,9 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
         sys.exit(1)
 
     if min_delay > max_delay:
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
         print("ERROR: --min-delay cannot be greater than --max-delay.", file=sys.stderr)
         sys.exit(1)
@@ -647,6 +739,79 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
         "max_tokens": runtime.cfg.max_tokens,
     }
     log_run("interface-jitter", meta, iterations, tag=args.tag)
+
+
+def build_interface_experiment_prompt(
+    exp: InterfaceExperiment, audience: str, fmt: str
+) -> str:
+    shape = (
+        "protocol with numbered steps" if fmt == "protocol" else "performative script"
+    )
+    return (
+        "You are drafting an interface-level neural bending experiment for Stage 1 — Interface Contact. "
+        "Treat the interface as a diagram that encodes power before computation. "
+        f"Write a {shape} that another researcher can run without extra context. \n\n"
+        f"Title: {exp.title}\n"
+        f"Goal: {exp.goal}\n"
+        f"Interface signal(s): {exp.interface_signal}\n"
+        f"Ritual setup: {exp.ritual}\n"
+        f"Probes to include: {', '.join(exp.probes)}\n\n"
+        "Emphasize how the interface positions agent/subject/observer and what tensions or refusals might surface. "
+        f"Write for an audience style: {audience}."
+    )
+
+
+def bend_interface_experiments(args: argparse.Namespace, config: Dict[str, Any]) -> None:
+    runtime = build_runtime(args, config)
+
+    available = {exp.name: exp for exp in INTERFACE_EXPERIMENTS}
+    chosen_names = args.experiments or list(available.keys())
+
+    print(">>> Interface Experiment Scripts")
+    print(f">>> Audience tone: {args.audience}; format: {args.format}")
+    print(f">>> Experiments: {', '.join(chosen_names)}")
+    print("=" * 60)
+
+    iterations = []
+    for idx, name in enumerate(chosen_names, start=1):
+        if name not in available:
+            print(f"ERROR: unknown experiment '{name}'.", file=sys.stderr)
+            sys.exit(1)
+
+        exp = available[name]
+        prompt = build_interface_experiment_prompt(exp, args.audience, args.format)
+        seed_value = (args.seed + idx) if args.seed is not None else None
+        out = call_model(
+            runtime=runtime,
+            prompt=prompt,
+            system_prompt=args.system_prompt,
+            temperature=args.temperature,
+            seed=seed_value,
+        )
+
+        print(f"\n--- {exp.title} ---")
+        print(out)
+        print("-" * 60)
+
+        iterations.append(
+            {
+                "experiment": exp.name,
+                "title": exp.title,
+                "prompt": prompt,
+                "output": out,
+                "temperature": args.temperature,
+                "seed": seed_value,
+                "format": args.format,
+                "audience": args.audience,
+            }
+        )
+
+    meta = {
+        "provider": runtime.provider,
+        "model": runtime.cfg.model,
+        "max_tokens": runtime.cfg.max_tokens,
+    }
+    log_run("interface-experiments", meta, iterations, tag=args.tag)
 
 
 # --- CLI --------------------------------------------------------------------
@@ -765,6 +930,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="When scrambling, drop the system prompt as well.",
     )
 
+    # Interface Experiment Scripts
+    experiment_names = [exp.name for exp in INTERFACE_EXPERIMENTS]
+    p_experiments = subparsers.add_parser(
+        "interface-experiments",
+        help="Generate new interface bend experiment scripts inspired by the PDFs.",
+    )
+    p_experiments.add_argument(
+        "--experiments",
+        nargs="+",
+        choices=experiment_names,
+        help="Subset of experiments to render (default: all).",
+    )
+    p_experiments.add_argument(
+        "--format",
+        choices=["protocol", "script"],
+        default="protocol",
+        help="Choose between numbered protocol or more theatrical script form.",
+    )
+    p_experiments.add_argument(
+        "--audience",
+        default="lab notebook",
+        help="Tone to write for (e.g., lab notebook, gallery wall, facilitator guide).",
+    )
+
     # Interface Jitter
     p_jitter = subparsers.add_parser(
         "interface-jitter", help="Run Interface Jitter bend."
@@ -825,6 +1014,8 @@ def main(argv: Optional[List[str]] = None) -> None:
         bend_entropy_seed(args, config)
     elif args.command == "context-collapse":
         bend_context_collapse(args, config)
+    elif args.command == "interface-experiments":
+        bend_interface_experiments(args, config)
     elif args.command == "interface-jitter":
         bend_interface_jitter(args, config)
     else:

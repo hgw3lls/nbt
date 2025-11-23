@@ -16,7 +16,12 @@ python interface_bends.py --temperature 1.1 context-collapse \
   --prompt "Explain what you are and how you decide what to say." \
   --scramble-meta --drop-system-in-scramble
 
-# 5) Interface Jitter
+# 5) Interface Experiment Scripts (Stage 1 — Interface Contact)
+python interface_bends.py --temperature 0.8 interface-experiments \
+  --format protocol --audience "facilitator guide" \
+  --experiments contact-trace diagram-rewrite
+
+# 6) Interface Jitter
 python interface_bends.py --temperature 0.9 interface-jitter \
   --prompt "Describe a city seen only through security cameras." \
   --min-delay 0.01 --max-delay 0.2 --pattern punctuated --jitter-seed 7
