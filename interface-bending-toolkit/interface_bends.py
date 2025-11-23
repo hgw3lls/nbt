@@ -67,7 +67,16 @@ def load_yaml_config(path: str) -> Dict[str, Any]:
             },
         }
     with cfg_path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        loaded = yaml.safe_load(f) or {}
+
+    if not isinstance(loaded, dict):
+        print(
+            f"ERROR: Expected a mapping object in {cfg_path}, got {type(loaded).__name__}.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    return loaded
 
 
 def apply_profile(args: argparse.Namespace) -> Dict[str, Any]:
@@ -511,6 +520,14 @@ def bend_interface_jitter(args: argparse.Namespace, config: Dict[str, Any]) -> N
 
     prompt = args.prompt or "Give me a short, vivid description of the city at night."
     system_prompt = args.system_prompt
+
+    if args.min_delay < 0 or args.max_delay < 0:
+        print("ERROR: --min-delay and --max-delay must be non-negative.", file=sys.stderr)
+        sys.exit(1)
+
+    if args.min_delay > args.max_delay:
+        print("ERROR: --min-delay cannot be greater than --max-delay.", file=sys.stderr)
+        sys.exit(1)
 
     text = call_model(
         runtime=runtime,
