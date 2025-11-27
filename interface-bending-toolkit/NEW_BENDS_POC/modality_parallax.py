@@ -2,7 +2,12 @@
 
 Twists the text embedding space relative to images to expose how fragile the
 <<<<<<< ours
+<<<<<<< ours
 multimodal weld is when geometry is perturbed. Logs baseline vs rotated matches.
+=======
+multimodal weld is when geometry is perturbed. Logs baseline vs rotated matches
+and similarity scores so we can see the weld come apart.
+>>>>>>> theirs
 =======
 multimodal weld is when geometry is perturbed. Logs baseline vs rotated matches
 and similarity scores so we can see the weld come apart.
@@ -122,11 +127,14 @@ def rotate_embeddings(
 
 
 <<<<<<< ours
+<<<<<<< ours
 def rank_images(text_feats: torch.Tensor, image_feats: torch.Tensor, top_k: int) -> List[List[int]]:
     sims = text_feats @ image_feats.T
     k = min(top_k, sims.size(1))
     return torch.topk(sims, k=k, dim=1).indices.tolist()
 =======
+=======
+>>>>>>> theirs
 def rank_images(
     text_feats: torch.Tensor, image_feats: torch.Tensor, top_k: int
 ) -> Tuple[List[List[int]], List[List[float]]]:
@@ -134,6 +142,9 @@ def rank_images(
     k = min(top_k, sims.size(1))
     topk = torch.topk(sims, k=k, dim=1)
     return topk.indices.tolist(), topk.values.tolist()
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 
@@ -148,7 +159,11 @@ def run_parallax(
     top_k: int,
     seed: int,
 <<<<<<< ours
+<<<<<<< ours
 ) -> Dict[str, List[List[int]]]:
+=======
+) -> Dict[str, Dict[str, List[List]]]:
+>>>>>>> theirs
 =======
 ) -> Dict[str, Dict[str, List[List]]]:
 >>>>>>> theirs
@@ -160,6 +175,10 @@ def run_parallax(
 
     with torch.no_grad():
 <<<<<<< ours
+<<<<<<< ours
+=======
+        model.eval()
+>>>>>>> theirs
 =======
         model.eval()
 >>>>>>> theirs
@@ -171,16 +190,22 @@ def run_parallax(
     rotated_text = rotate_embeddings(text_feats, angle_rad, mix, u, v)
 
 <<<<<<< ours
+<<<<<<< ours
     return {
         "baseline": rank_images(text_feats, image_feats, top_k),
         "parallax": rank_images(rotated_text, image_feats, top_k),
 =======
+=======
+>>>>>>> theirs
     base_idx, base_scores = rank_images(text_feats, image_feats, top_k)
     bent_idx, bent_scores = rank_images(rotated_text, image_feats, top_k)
 
     return {
         "baseline": {"indices": base_idx, "scores": base_scores},
         "parallax": {"indices": bent_idx, "scores": bent_scores},
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     }
 
@@ -192,7 +217,11 @@ def save_log(
     angle_deg: float,
     mix: float,
 <<<<<<< ours
+<<<<<<< ours
     results: Dict[str, List[List[int]]],
+=======
+    results: Dict[str, Dict[str, List[List]]],
+>>>>>>> theirs
 =======
     results: Dict[str, Dict[str, List[List]]],
 >>>>>>> theirs
@@ -206,9 +235,12 @@ def save_log(
         "rotation_angle_deg": angle_deg,
         "mix": mix,
 <<<<<<< ours
+<<<<<<< ours
         "baseline_top": [[image_names[i] for i in row] for row in results["baseline"]],
         "parallax_top": [[image_names[i] for i in row] for row in results["parallax"]],
 =======
+=======
+>>>>>>> theirs
         "baseline_top": [
             {
                 "names": [image_names[i] for i in row],
@@ -223,6 +255,9 @@ def save_log(
             }
             for idx, row in enumerate(results["parallax"]["indices"])
         ],
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
     }
     out_path = log_dir / f"modality_parallax_{timestamp}.json"
@@ -235,6 +270,7 @@ def print_results(
     text_prompts: Sequence[str],
     image_names: Sequence[str],
 <<<<<<< ours
+<<<<<<< ours
     results: Dict[str, List[List[int]]],
 ):
     for idx, prompt in enumerate(text_prompts):
@@ -246,6 +282,8 @@ def print_results(
         print("Baseline top-k:", baseline)
         print("Parallax top-k:", bent)
 =======
+=======
+>>>>>>> theirs
     results: Dict[str, Dict[str, List[List]]],
 ):
     for idx, prompt in enumerate(text_prompts):
@@ -258,6 +296,9 @@ def print_results(
         print("# PARALLAX ERROR: twisting one modality's jack to misalign fusion.")
         print("Baseline top-k (cosine):", list(zip(baseline, [round(s, 4) for s in baseline_scores])))
         print("Parallax top-k (cosine):", list(zip(bent, [round(s, 4) for s in bent_scores])))
+<<<<<<< ours
+>>>>>>> theirs
+=======
 >>>>>>> theirs
 
 
