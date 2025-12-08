@@ -28,3 +28,25 @@ bent_model = apply_bend(
 ```
 
 All bend registrations occur on import, so simply importing the package is enough to access `apply_bend` and the discovery helpers.
+<<<<<<< ours
+=======
+
+## Proof-of-concept GUI
+
+Launch a minimal Tkinter interface to browse bends, filter by domain/category, and apply one to a provided model.
+
+```bash
+python -m network_bending.gui
+```
+
+Pass a `model_provider` callable to `launch_gui` if you want to supply a real model instead of the included placeholder:
+
+```python
+from network_bending import launch_gui
+
+def load_model():
+    return my_model
+
+launch_gui(model_provider=load_model)
+```
+>>>>>>> theirs
