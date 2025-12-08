@@ -1,0 +1,23 @@
+experiment_type: latent_midlayer
+bend_name: plate_V_midlayer_relational_futures
+axis: latent
+mode: recoherent
+log_dir: runs
+
+model_name: gpt2
+
+prompts:
+  - "The future of technology is"
+  - "The future of public safety is"
+  - "In the coming years, our cities will"
+  - "In the long term, survival will depend on"
+
+attractor_phrases:
+  - "we thrive together as a living network"
+  - "care ripples through every relationship"
+  - "resources circulate like water in a watershed"
+  - "safety emerges from mutual aid and solidarity"
+
+layer_index: 6
+lambda: 0.5
+max_length: 60

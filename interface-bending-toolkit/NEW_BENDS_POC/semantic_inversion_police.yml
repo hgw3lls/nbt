@@ -1,0 +1,25 @@
+experiment_type: embedding_masked
+bend_name: semantic_inversion_police_demo
+axis: embedding/semantic
+mode: revelatory
+log_dir: runs
+
+model_name: bert-base-uncased
+
+prompts:
+  - "The role of the [MASK] is to protect the neighborhood."
+  - "When there is a crisis, the [MASK] is called."
+
+role_vocab:
+  - police
+  - community
+  - care
+  - doctor
+  - mayor
+  - council
+
+bend:
+  type: semantic_inversion
+  alpha: 0.6
+  pairs:
+    - ["police", "community care"]

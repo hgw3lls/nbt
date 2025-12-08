@@ -1,0 +1,955 @@
+{
+  "timestamp": "20251127_125201",
+  "bend_name": "plate_II_citizen_police_pairwise",
+  "axis": "embedding/semantic",
+  "mode": "revelatory",
+  "model_name": "bert-base-uncased",
+  "bend_params": {
+    "bend_type": "pairwise_drift",
+    "alpha": 0.5,
+    "pairs": [
+      [
+        "citizen",
+        "resident"
+      ],
+      [
+        "citizens",
+        "residents"
+      ],
+      [
+        "citizen",
+        "neighbor"
+      ],
+      [
+        "citizens",
+        "neighbors"
+      ],
+      [
+        "police",
+        "community care"
+      ],
+      [
+        "police",
+        "mutual aid"
+      ]
+    ],
+    "from_cluster": [],
+    "to_cluster": []
+  },
+  "prompts": [
+    "Every [MASK] has the right to vote.",
+    "The [MASK] is responsible for obeying the law.",
+    "When there is a disturbance, the [MASK] arrives to restore order.",
+    "The [MASK] is called when someone is in danger.",
+    "The [MASK] is accountable to the community."
+  ],
+  "role_vocab": [
+    "citizen",
+    "citizens",
+    "resident",
+    "residents",
+    "neighbor",
+    "neighbors",
+    "police",
+    "officer",
+    "officers",
+    "community",
+    "care",
+    "organizer",
+    "council"
+  ],
+  "role_counts": {
+    "baseline": {
+      "citizen": 2,
+      "citizens": 0,
+      "resident": 0,
+      "residents": 0,
+      "neighbor": 0,
+      "neighbors": 0,
+      "police": 2,
+      "officer": 0,
+      "officers": 0,
+      "community": 0,
+      "care": 0,
+      "organizer": 0,
+      "council": 1
+    },
+    "bent": {
+      "citizen": 1,
+      "citizens": 0,
+      "resident": 0,
+      "residents": 0,
+      "neighbor": 0,
+      "neighbors": 0,
+      "police": 0,
+      "officer": 0,
+      "officers": 0,
+      "community": 0,
+      "care": 0,
+      "organizer": 0,
+      "council": 1
+    }
+  },
+  "per_prompt": {
+    "Every [MASK] has the right to vote.": {
+      "base_topk": [
+        {
+          "token": "citizen",
+          "prob": 0.8655427098274231
+        },
+        {
+          "token": "voter",
+          "prob": 0.03253571689128876
+        },
+        {
+          "token": "person",
+          "prob": 0.03054591454565525
+        },
+        {
+          "token": "individual",
+          "prob": 0.0239117369055748
+        },
+        {
+          "token": "member",
+          "prob": 0.01936296559870243
+        },
+        {
+          "token": "woman",
+          "prob": 0.0075176917016506195
+        },
+        {
+          "token": "man",
+          "prob": 0.006904624868184328
+        },
+        {
+          "token": "elector",
+          "prob": 0.006727976258844137
+        },
+        {
+          "token": "student",
+          "prob": 0.004275790881365538
+        },
+        {
+          "token": "male",
+          "prob": 0.002674803137779236
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "voter",
+          "prob": 0.23639518022537231
+        },
+        {
+          "token": "person",
+          "prob": 0.2219378501176834
+        },
+        {
+          "token": "individual",
+          "prob": 0.1737358123064041
+        },
+        {
+          "token": "member",
+          "prob": 0.14068575203418732
+        },
+        {
+          "token": "woman",
+          "prob": 0.054621390998363495
+        },
+        {
+          "token": "man",
+          "prob": 0.0501670204102993
+        },
+        {
+          "token": "elector",
+          "prob": 0.04888354241847992
+        },
+        {
+          "token": "student",
+          "prob": 0.031066671013832092
+        },
+        {
+          "token": "citizen",
+          "prob": 0.023072371259331703
+        },
+        {
+          "token": "male",
+          "prob": 0.019434351474046707
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 9,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "citizen",
+            "base_prob": 0.8655427098274231,
+            "bent_token": "voter",
+            "bent_prob": 0.23639518022537231,
+            "changed": true
+          },
+          {
+            "rank": 2,
+            "base_token": "voter",
+            "base_prob": 0.03253571689128876,
+            "bent_token": "person",
+            "bent_prob": 0.2219378501176834,
+            "changed": true
+          },
+          {
+            "rank": 3,
+            "base_token": "person",
+            "base_prob": 0.03054591454565525,
+            "bent_token": "individual",
+            "bent_prob": 0.1737358123064041,
+            "changed": true
+          },
+          {
+            "rank": 4,
+            "base_token": "individual",
+            "base_prob": 0.0239117369055748,
+            "bent_token": "member",
+            "bent_prob": 0.14068575203418732,
+            "changed": true
+          },
+          {
+            "rank": 5,
+            "base_token": "member",
+            "base_prob": 0.01936296559870243,
+            "bent_token": "woman",
+            "bent_prob": 0.054621390998363495,
+            "changed": true
+          },
+          {
+            "rank": 6,
+            "base_token": "woman",
+            "base_prob": 0.0075176917016506195,
+            "bent_token": "man",
+            "bent_prob": 0.0501670204102993,
+            "changed": true
+          },
+          {
+            "rank": 7,
+            "base_token": "man",
+            "base_prob": 0.006904624868184328,
+            "bent_token": "elector",
+            "bent_prob": 0.04888354241847992,
+            "changed": true
+          },
+          {
+            "rank": 8,
+            "base_token": "elector",
+            "base_prob": 0.006727976258844137,
+            "bent_token": "student",
+            "bent_prob": 0.031066671013832092,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "student",
+            "base_prob": 0.004275790881365538,
+            "bent_token": "citizen",
+            "bent_prob": 0.023072371259331703,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "male",
+            "base_prob": 0.002674803137779236,
+            "bent_token": "male",
+            "bent_prob": 0.019434351474046707,
+            "changed": false
+          }
+        ]
+      }
+    },
+    "The [MASK] is responsible for obeying the law.": {
+      "base_topk": [
+        {
+          "token": "person",
+          "prob": 0.21442127227783203
+        },
+        {
+          "token": "individual",
+          "prob": 0.17476920783519745
+        },
+        {
+          "token": "state",
+          "prob": 0.13191089034080505
+        },
+        {
+          "token": "government",
+          "prob": 0.09969604015350342
+        },
+        {
+          "token": "citizen",
+          "prob": 0.0737093910574913
+        },
+        {
+          "token": "minister",
+          "prob": 0.06702391058206558
+        },
+        {
+          "token": "law",
+          "prob": 0.06670843809843063
+        },
+        {
+          "token": "king",
+          "prob": 0.05875159054994583
+        },
+        {
+          "token": "president",
+          "prob": 0.05662147328257561
+        },
+        {
+          "token": "judge",
+          "prob": 0.05638781189918518
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "person",
+          "prob": 0.22090719640254974
+        },
+        {
+          "token": "individual",
+          "prob": 0.18005572259426117
+        },
+        {
+          "token": "state",
+          "prob": 0.13590100407600403
+        },
+        {
+          "token": "government",
+          "prob": 0.10271169245243073
+        },
+        {
+          "token": "minister",
+          "prob": 0.06905128061771393
+        },
+        {
+          "token": "law",
+          "prob": 0.06872627139091492
+        },
+        {
+          "token": "king",
+          "prob": 0.06052874028682709
+        },
+        {
+          "token": "president",
+          "prob": 0.05833418667316437
+        },
+        {
+          "token": "judge",
+          "prob": 0.05809345841407776
+        },
+        {
+          "token": "court",
+          "prob": 0.045690301805734634
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 6,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "person",
+            "base_prob": 0.21442127227783203,
+            "bent_token": "person",
+            "bent_prob": 0.22090719640254974,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "individual",
+            "base_prob": 0.17476920783519745,
+            "bent_token": "individual",
+            "bent_prob": 0.18005572259426117,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "state",
+            "base_prob": 0.13191089034080505,
+            "bent_token": "state",
+            "bent_prob": 0.13590100407600403,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "government",
+            "base_prob": 0.09969604015350342,
+            "bent_token": "government",
+            "bent_prob": 0.10271169245243073,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "citizen",
+            "base_prob": 0.0737093910574913,
+            "bent_token": "minister",
+            "bent_prob": 0.06905128061771393,
+            "changed": true
+          },
+          {
+            "rank": 6,
+            "base_token": "minister",
+            "base_prob": 0.06702391058206558,
+            "bent_token": "law",
+            "bent_prob": 0.06872627139091492,
+            "changed": true
+          },
+          {
+            "rank": 7,
+            "base_token": "law",
+            "base_prob": 0.06670843809843063,
+            "bent_token": "king",
+            "bent_prob": 0.06052874028682709,
+            "changed": true
+          },
+          {
+            "rank": 8,
+            "base_token": "king",
+            "base_prob": 0.05875159054994583,
+            "bent_token": "president",
+            "bent_prob": 0.05833418667316437,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "president",
+            "base_prob": 0.05662147328257561,
+            "bent_token": "judge",
+            "bent_prob": 0.05809345841407776,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "judge",
+            "base_prob": 0.05638781189918518,
+            "bent_token": "court",
+            "bent_prob": 0.045690301805734634,
+            "changed": true
+          }
+        ]
+      }
+    },
+    "When there is a disturbance, the [MASK] arrives to restore order.": {
+      "base_topk": [
+        {
+          "token": "priest",
+          "prob": 0.18984457850456238
+        },
+        {
+          "token": "sheriff",
+          "prob": 0.1671193242073059
+        },
+        {
+          "token": "governor",
+          "prob": 0.13397817313671112
+        },
+        {
+          "token": "mayor",
+          "prob": 0.11020438373088837
+        },
+        {
+          "token": "police",
+          "prob": 0.08353029936552048
+        },
+        {
+          "token": "king",
+          "prob": 0.07522722333669662
+        },
+        {
+          "token": "captain",
+          "prob": 0.07220663130283356
+        },
+        {
+          "token": "commander",
+          "prob": 0.07193325459957123
+        },
+        {
+          "token": "president",
+          "prob": 0.04836122319102287
+        },
+        {
+          "token": "doctor",
+          "prob": 0.04759485647082329
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "priest",
+          "prob": 0.19699479639530182
+        },
+        {
+          "token": "sheriff",
+          "prob": 0.17341361939907074
+        },
+        {
+          "token": "governor",
+          "prob": 0.1390242576599121
+        },
+        {
+          "token": "mayor",
+          "prob": 0.11435507237911224
+        },
+        {
+          "token": "king",
+          "prob": 0.07806054502725601
+        },
+        {
+          "token": "captain",
+          "prob": 0.07492619007825851
+        },
+        {
+          "token": "commander",
+          "prob": 0.07464250922203064
+        },
+        {
+          "token": "president",
+          "prob": 0.05018267780542374
+        },
+        {
+          "token": "doctor",
+          "prob": 0.04938744753599167
+        },
+        {
+          "token": "chief",
+          "prob": 0.04901285469532013
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 6,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "priest",
+            "base_prob": 0.18984457850456238,
+            "bent_token": "priest",
+            "bent_prob": 0.19699479639530182,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "sheriff",
+            "base_prob": 0.1671193242073059,
+            "bent_token": "sheriff",
+            "bent_prob": 0.17341361939907074,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "governor",
+            "base_prob": 0.13397817313671112,
+            "bent_token": "governor",
+            "bent_prob": 0.1390242576599121,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "mayor",
+            "base_prob": 0.11020438373088837,
+            "bent_token": "mayor",
+            "bent_prob": 0.11435507237911224,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "police",
+            "base_prob": 0.08353029936552048,
+            "bent_token": "king",
+            "bent_prob": 0.07806054502725601,
+            "changed": true
+          },
+          {
+            "rank": 6,
+            "base_token": "king",
+            "base_prob": 0.07522722333669662,
+            "bent_token": "captain",
+            "bent_prob": 0.07492619007825851,
+            "changed": true
+          },
+          {
+            "rank": 7,
+            "base_token": "captain",
+            "base_prob": 0.07220663130283356,
+            "bent_token": "commander",
+            "bent_prob": 0.07464250922203064,
+            "changed": true
+          },
+          {
+            "rank": 8,
+            "base_token": "commander",
+            "base_prob": 0.07193325459957123,
+            "bent_token": "president",
+            "bent_prob": 0.05018267780542374,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "president",
+            "base_prob": 0.04836122319102287,
+            "bent_token": "doctor",
+            "bent_prob": 0.04938744753599167,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "doctor",
+            "base_prob": 0.04759485647082329,
+            "bent_token": "chief",
+            "bent_prob": 0.04901285469532013,
+            "changed": true
+          }
+        ]
+      }
+    },
+    "The [MASK] is called when someone is in danger.": {
+      "base_topk": [
+        {
+          "token": "phone",
+          "prob": 0.343662291765213
+        },
+        {
+          "token": "number",
+          "prob": 0.21618357300758362
+        },
+        {
+          "token": "alarm",
+          "prob": 0.20615774393081665
+        },
+        {
+          "token": "name",
+          "prob": 0.05519022420048714
+        },
+        {
+          "token": "call",
+          "prob": 0.05401735007762909
+        },
+        {
+          "token": "telephone",
+          "prob": 0.03148329257965088
+        },
+        {
+          "token": "bell",
+          "prob": 0.027446048334240913
+        },
+        {
+          "token": "police",
+          "prob": 0.02315054088830948
+        },
+        {
+          "token": "latter",
+          "prob": 0.022927166894078255
+        },
+        {
+          "token": "siren",
+          "prob": 0.01978176459670067
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "phone",
+          "prob": 0.3450583219528198
+        },
+        {
+          "token": "number",
+          "prob": 0.21706175804138184
+        },
+        {
+          "token": "alarm",
+          "prob": 0.20699520409107208
+        },
+        {
+          "token": "name",
+          "prob": 0.05541441962122917
+        },
+        {
+          "token": "call",
+          "prob": 0.05423678085207939
+        },
+        {
+          "token": "telephone",
+          "prob": 0.031611181795597076
+        },
+        {
+          "token": "bell",
+          "prob": 0.02755754068493843
+        },
+        {
+          "token": "latter",
+          "prob": 0.023020301014184952
+        },
+        {
+          "token": "siren",
+          "prob": 0.01986212283372879
+        },
+        {
+          "token": "song",
+          "prob": 0.019182350486516953
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 3,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "phone",
+            "base_prob": 0.343662291765213,
+            "bent_token": "phone",
+            "bent_prob": 0.3450583219528198,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "number",
+            "base_prob": 0.21618357300758362,
+            "bent_token": "number",
+            "bent_prob": 0.21706175804138184,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "alarm",
+            "base_prob": 0.20615774393081665,
+            "bent_token": "alarm",
+            "bent_prob": 0.20699520409107208,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "name",
+            "base_prob": 0.05519022420048714,
+            "bent_token": "name",
+            "bent_prob": 0.05541441962122917,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "call",
+            "base_prob": 0.05401735007762909,
+            "bent_token": "call",
+            "bent_prob": 0.05423678085207939,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "telephone",
+            "base_prob": 0.03148329257965088,
+            "bent_token": "telephone",
+            "bent_prob": 0.031611181795597076,
+            "changed": false
+          },
+          {
+            "rank": 7,
+            "base_token": "bell",
+            "base_prob": 0.027446048334240913,
+            "bent_token": "bell",
+            "bent_prob": 0.02755754068493843,
+            "changed": false
+          },
+          {
+            "rank": 8,
+            "base_token": "police",
+            "base_prob": 0.02315054088830948,
+            "bent_token": "latter",
+            "bent_prob": 0.023020301014184952,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "latter",
+            "base_prob": 0.022927166894078255,
+            "bent_token": "siren",
+            "bent_prob": 0.01986212283372879,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "siren",
+            "base_prob": 0.01978176459670067,
+            "bent_token": "song",
+            "bent_prob": 0.019182350486516953,
+            "changed": true
+          }
+        ]
+      }
+    },
+    "The [MASK] is accountable to the community.": {
+      "base_topk": [
+        {
+          "token": "council",
+          "prob": 0.15069463849067688
+        },
+        {
+          "token": "minister",
+          "prob": 0.12815049290657043
+        },
+        {
+          "token": "board",
+          "prob": 0.11501871794462204
+        },
+        {
+          "token": "mayor",
+          "prob": 0.11244069784879684
+        },
+        {
+          "token": "president",
+          "prob": 0.10727038979530334
+        },
+        {
+          "token": "director",
+          "prob": 0.09676176309585571
+        },
+        {
+          "token": "commissioner",
+          "prob": 0.08382446318864822
+        },
+        {
+          "token": "government",
+          "prob": 0.07871741056442261
+        },
+        {
+          "token": "commission",
+          "prob": 0.06688462942838669
+        },
+        {
+          "token": "court",
+          "prob": 0.060236766934394836
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "council",
+          "prob": 0.15069463849067688
+        },
+        {
+          "token": "minister",
+          "prob": 0.12815049290657043
+        },
+        {
+          "token": "board",
+          "prob": 0.11501871794462204
+        },
+        {
+          "token": "mayor",
+          "prob": 0.11244069784879684
+        },
+        {
+          "token": "president",
+          "prob": 0.10727038979530334
+        },
+        {
+          "token": "director",
+          "prob": 0.09676176309585571
+        },
+        {
+          "token": "commissioner",
+          "prob": 0.08382446318864822
+        },
+        {
+          "token": "government",
+          "prob": 0.07871741056442261
+        },
+        {
+          "token": "commission",
+          "prob": 0.06688462942838669
+        },
+        {
+          "token": "court",
+          "prob": 0.060236766934394836
+        }
+      ],
+      "diff": {
+        "identical": true,
+        "num_positions_changed": 0,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "council",
+            "base_prob": 0.15069463849067688,
+            "bent_token": "council",
+            "bent_prob": 0.15069463849067688,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "minister",
+            "base_prob": 0.12815049290657043,
+            "bent_token": "minister",
+            "bent_prob": 0.12815049290657043,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "board",
+            "base_prob": 0.11501871794462204,
+            "bent_token": "board",
+            "bent_prob": 0.11501871794462204,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "mayor",
+            "base_prob": 0.11244069784879684,
+            "bent_token": "mayor",
+            "bent_prob": 0.11244069784879684,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "president",
+            "base_prob": 0.10727038979530334,
+            "bent_token": "president",
+            "bent_prob": 0.10727038979530334,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "director",
+            "base_prob": 0.09676176309585571,
+            "bent_token": "director",
+            "bent_prob": 0.09676176309585571,
+            "changed": false
+          },
+          {
+            "rank": 7,
+            "base_token": "commissioner",
+            "base_prob": 0.08382446318864822,
+            "bent_token": "commissioner",
+            "bent_prob": 0.08382446318864822,
+            "changed": false
+          },
+          {
+            "rank": 8,
+            "base_token": "government",
+            "base_prob": 0.07871741056442261,
+            "bent_token": "government",
+            "bent_prob": 0.07871741056442261,
+            "changed": false
+          },
+          {
+            "rank": 9,
+            "base_token": "commission",
+            "base_prob": 0.06688462942838669,
+            "bent_token": "commission",
+            "bent_prob": 0.06688462942838669,
+            "changed": false
+          },
+          {
+            "rank": 10,
+            "base_token": "court",
+            "base_prob": 0.060236766934394836,
+            "bent_token": "court",
+            "bent_prob": 0.060236766934394836,
+            "changed": false
+          }
+        ]
+      }
+    }
+  }
+}

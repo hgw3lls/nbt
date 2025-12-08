@@ -1,0 +1,920 @@
+{
+  "timestamp": "20251127_125153",
+  "bend_name": "plate_I_scientist_midwife",
+  "axis": "embedding/semantic",
+  "mode": "revelatory",
+  "model_name": "bert-base-uncased",
+  "bend_params": {
+    "bend_type": "cluster_drift",
+    "alpha": 0.6,
+    "pairs": [],
+    "from_cluster": [
+      "scientist",
+      "researcher",
+      "expert"
+    ],
+    "to_cluster": [
+      "midwife",
+      "nurse",
+      "doula"
+    ]
+  },
+  "prompts": [
+    "The [MASK] conducted the experiment carefully.",
+    "The [MASK] published their findings in a major journal.",
+    "In the delivery room, the [MASK] is trusted with complex decisions.",
+    "The [MASK] is recognized as an expert in their field.",
+    "The [MASK] is invited to speak at international conferences."
+  ],
+  "role_vocab": [
+    "scientist",
+    "researcher",
+    "expert",
+    "doctor",
+    "midwife",
+    "nurse",
+    "doula"
+  ],
+  "role_counts": {
+    "baseline": {
+      "scientist": 1,
+      "researcher": 0,
+      "expert": 0,
+      "doctor": 2,
+      "midwife": 0,
+      "nurse": 1,
+      "doula": 0
+    },
+    "bent": {
+      "scientist": 0,
+      "researcher": 0,
+      "expert": 0,
+      "doctor": 2,
+      "midwife": 0,
+      "nurse": 1,
+      "doula": 0
+    }
+  },
+  "per_prompt": {
+    "The [MASK] conducted the experiment carefully.": {
+      "base_topk": [
+        {
+          "token": "scientists",
+          "prob": 0.2745547890663147
+        },
+        {
+          "token": "team",
+          "prob": 0.20685149729251862
+        },
+        {
+          "token": "doctor",
+          "prob": 0.12495846301317215
+        },
+        {
+          "token": "researchers",
+          "prob": 0.11081152409315109
+        },
+        {
+          "token": "group",
+          "prob": 0.08660019934177399
+        },
+        {
+          "token": "scientist",
+          "prob": 0.047270517796278
+        },
+        {
+          "token": "men",
+          "prob": 0.038814570754766464
+        },
+        {
+          "token": "laboratory",
+          "prob": 0.03733113035559654
+        },
+        {
+          "token": "crew",
+          "prob": 0.03660754859447479
+        },
+        {
+          "token": "doctors",
+          "prob": 0.03619972988963127
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "scientists",
+          "prob": 0.2792762219905853
+        },
+        {
+          "token": "team",
+          "prob": 0.21040865778923035
+        },
+        {
+          "token": "doctor",
+          "prob": 0.12710733711719513
+        },
+        {
+          "token": "researchers",
+          "prob": 0.11271711438894272
+        },
+        {
+          "token": "group",
+          "prob": 0.08808943629264832
+        },
+        {
+          "token": "men",
+          "prob": 0.039482053369283676
+        },
+        {
+          "token": "laboratory",
+          "prob": 0.03797310218214989
+        },
+        {
+          "token": "crew",
+          "prob": 0.037237077951431274
+        },
+        {
+          "token": "doctors",
+          "prob": 0.03682224825024605
+        },
+        {
+          "token": "pair",
+          "prob": 0.030886787921190262
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 5,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "scientists",
+            "base_prob": 0.2745547890663147,
+            "bent_token": "scientists",
+            "bent_prob": 0.2792762219905853,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "team",
+            "base_prob": 0.20685149729251862,
+            "bent_token": "team",
+            "bent_prob": 0.21040865778923035,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "doctor",
+            "base_prob": 0.12495846301317215,
+            "bent_token": "doctor",
+            "bent_prob": 0.12710733711719513,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "researchers",
+            "base_prob": 0.11081152409315109,
+            "bent_token": "researchers",
+            "bent_prob": 0.11271711438894272,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "group",
+            "base_prob": 0.08660019934177399,
+            "bent_token": "group",
+            "bent_prob": 0.08808943629264832,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "scientist",
+            "base_prob": 0.047270517796278,
+            "bent_token": "men",
+            "bent_prob": 0.039482053369283676,
+            "changed": true
+          },
+          {
+            "rank": 7,
+            "base_token": "men",
+            "base_prob": 0.038814570754766464,
+            "bent_token": "laboratory",
+            "bent_prob": 0.03797310218214989,
+            "changed": true
+          },
+          {
+            "rank": 8,
+            "base_token": "laboratory",
+            "base_prob": 0.03733113035559654,
+            "bent_token": "crew",
+            "bent_prob": 0.037237077951431274,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "crew",
+            "base_prob": 0.03660754859447479,
+            "bent_token": "doctors",
+            "bent_prob": 0.03682224825024605,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "doctors",
+            "base_prob": 0.03619972988963127,
+            "bent_token": "pair",
+            "bent_prob": 0.030886787921190262,
+            "changed": true
+          }
+        ]
+      }
+    },
+    "The [MASK] published their findings in a major journal.": {
+      "base_topk": [
+        {
+          "token": "team",
+          "prob": 0.44061046838760376
+        },
+        {
+          "token": "group",
+          "prob": 0.3110930323600769
+        },
+        {
+          "token": "researchers",
+          "prob": 0.0664532482624054
+        },
+        {
+          "token": "committee",
+          "prob": 0.047807905822992325
+        },
+        {
+          "token": "two",
+          "prob": 0.03720763325691223
+        },
+        {
+          "token": "authors",
+          "prob": 0.029045311734080315
+        },
+        {
+          "token": "scientists",
+          "prob": 0.022742487490177155
+        },
+        {
+          "token": "commission",
+          "prob": 0.019190402701497078
+        },
+        {
+          "token": "three",
+          "prob": 0.013176873326301575
+        },
+        {
+          "token": "institute",
+          "prob": 0.01267264410853386
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "team",
+          "prob": 0.44061046838760376
+        },
+        {
+          "token": "group",
+          "prob": 0.3110930323600769
+        },
+        {
+          "token": "researchers",
+          "prob": 0.0664532482624054
+        },
+        {
+          "token": "committee",
+          "prob": 0.047807905822992325
+        },
+        {
+          "token": "two",
+          "prob": 0.03720763325691223
+        },
+        {
+          "token": "authors",
+          "prob": 0.029045311734080315
+        },
+        {
+          "token": "scientists",
+          "prob": 0.022742487490177155
+        },
+        {
+          "token": "commission",
+          "prob": 0.019190402701497078
+        },
+        {
+          "token": "three",
+          "prob": 0.013176873326301575
+        },
+        {
+          "token": "institute",
+          "prob": 0.01267264410853386
+        }
+      ],
+      "diff": {
+        "identical": true,
+        "num_positions_changed": 0,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "team",
+            "base_prob": 0.44061046838760376,
+            "bent_token": "team",
+            "bent_prob": 0.44061046838760376,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "group",
+            "base_prob": 0.3110930323600769,
+            "bent_token": "group",
+            "bent_prob": 0.3110930323600769,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "researchers",
+            "base_prob": 0.0664532482624054,
+            "bent_token": "researchers",
+            "bent_prob": 0.0664532482624054,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "committee",
+            "base_prob": 0.047807905822992325,
+            "bent_token": "committee",
+            "bent_prob": 0.047807905822992325,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "two",
+            "base_prob": 0.03720763325691223,
+            "bent_token": "two",
+            "bent_prob": 0.03720763325691223,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "authors",
+            "base_prob": 0.029045311734080315,
+            "bent_token": "authors",
+            "bent_prob": 0.029045311734080315,
+            "changed": false
+          },
+          {
+            "rank": 7,
+            "base_token": "scientists",
+            "base_prob": 0.022742487490177155,
+            "bent_token": "scientists",
+            "bent_prob": 0.022742487490177155,
+            "changed": false
+          },
+          {
+            "rank": 8,
+            "base_token": "commission",
+            "base_prob": 0.019190402701497078,
+            "bent_token": "commission",
+            "bent_prob": 0.019190402701497078,
+            "changed": false
+          },
+          {
+            "rank": 9,
+            "base_token": "three",
+            "base_prob": 0.013176873326301575,
+            "bent_token": "three",
+            "bent_prob": 0.013176873326301575,
+            "changed": false
+          },
+          {
+            "rank": 10,
+            "base_token": "institute",
+            "base_prob": 0.01267264410853386,
+            "bent_token": "institute",
+            "bent_prob": 0.01267264410853386,
+            "changed": false
+          }
+        ]
+      }
+    },
+    "In the delivery room, the [MASK] is trusted with complex decisions.": {
+      "base_topk": [
+        {
+          "token": "patient",
+          "prob": 0.2958242893218994
+        },
+        {
+          "token": "customer",
+          "prob": 0.1302577406167984
+        },
+        {
+          "token": "doctor",
+          "prob": 0.10421344637870789
+        },
+        {
+          "token": "client",
+          "prob": 0.10201860219240189
+        },
+        {
+          "token": "team",
+          "prob": 0.06891275197267532
+        },
+        {
+          "token": "person",
+          "prob": 0.06838954240083694
+        },
+        {
+          "token": "manager",
+          "prob": 0.06390508264303207
+        },
+        {
+          "token": "operator",
+          "prob": 0.06192546337842941
+        },
+        {
+          "token": "nurse",
+          "prob": 0.05985453724861145
+        },
+        {
+          "token": "agent",
+          "prob": 0.04469853639602661
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "patient",
+          "prob": 0.2958242893218994
+        },
+        {
+          "token": "customer",
+          "prob": 0.1302577406167984
+        },
+        {
+          "token": "doctor",
+          "prob": 0.10421344637870789
+        },
+        {
+          "token": "client",
+          "prob": 0.10201860219240189
+        },
+        {
+          "token": "team",
+          "prob": 0.06891275197267532
+        },
+        {
+          "token": "person",
+          "prob": 0.06838954240083694
+        },
+        {
+          "token": "manager",
+          "prob": 0.06390508264303207
+        },
+        {
+          "token": "operator",
+          "prob": 0.06192546337842941
+        },
+        {
+          "token": "nurse",
+          "prob": 0.05985453724861145
+        },
+        {
+          "token": "agent",
+          "prob": 0.04469853639602661
+        }
+      ],
+      "diff": {
+        "identical": true,
+        "num_positions_changed": 0,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "patient",
+            "base_prob": 0.2958242893218994,
+            "bent_token": "patient",
+            "bent_prob": 0.2958242893218994,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "customer",
+            "base_prob": 0.1302577406167984,
+            "bent_token": "customer",
+            "bent_prob": 0.1302577406167984,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "doctor",
+            "base_prob": 0.10421344637870789,
+            "bent_token": "doctor",
+            "bent_prob": 0.10421344637870789,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "client",
+            "base_prob": 0.10201860219240189,
+            "bent_token": "client",
+            "bent_prob": 0.10201860219240189,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "team",
+            "base_prob": 0.06891275197267532,
+            "bent_token": "team",
+            "bent_prob": 0.06891275197267532,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "person",
+            "base_prob": 0.06838954240083694,
+            "bent_token": "person",
+            "bent_prob": 0.06838954240083694,
+            "changed": false
+          },
+          {
+            "rank": 7,
+            "base_token": "manager",
+            "base_prob": 0.06390508264303207,
+            "bent_token": "manager",
+            "bent_prob": 0.06390508264303207,
+            "changed": false
+          },
+          {
+            "rank": 8,
+            "base_token": "operator",
+            "base_prob": 0.06192546337842941,
+            "bent_token": "operator",
+            "bent_prob": 0.06192546337842941,
+            "changed": false
+          },
+          {
+            "rank": 9,
+            "base_token": "nurse",
+            "base_prob": 0.05985453724861145,
+            "bent_token": "nurse",
+            "bent_prob": 0.05985453724861145,
+            "changed": false
+          },
+          {
+            "rank": 10,
+            "base_token": "agent",
+            "base_prob": 0.04469853639602661,
+            "bent_token": "agent",
+            "bent_prob": 0.04469853639602661,
+            "changed": false
+          }
+        ]
+      }
+    },
+    "The [MASK] is recognized as an expert in their field.": {
+      "base_topk": [
+        {
+          "token": "director",
+          "prob": 0.20989978313446045
+        },
+        {
+          "token": "author",
+          "prob": 0.18091334402561188
+        },
+        {
+          "token": "professor",
+          "prob": 0.13465189933776855
+        },
+        {
+          "token": "recipient",
+          "prob": 0.09659349918365479
+        },
+        {
+          "token": "company",
+          "prob": 0.08486968278884888
+        },
+        {
+          "token": "founder",
+          "prob": 0.06540878117084503
+        },
+        {
+          "token": "president",
+          "prob": 0.06525962054729462
+        },
+        {
+          "token": "artist",
+          "prob": 0.06207040324807167
+        },
+        {
+          "token": "winner",
+          "prob": 0.05407264456152916
+        },
+        {
+          "token": "school",
+          "prob": 0.04626035690307617
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "company",
+          "prob": 0.2494105100631714
+        },
+        {
+          "token": "director",
+          "prob": 0.1864435225725174
+        },
+        {
+          "token": "author",
+          "prob": 0.11833007633686066
+        },
+        {
+          "token": "organization",
+          "prob": 0.07931017130613327
+        },
+        {
+          "token": "founder",
+          "prob": 0.07211438566446304
+        },
+        {
+          "token": "artist",
+          "prob": 0.0710562989115715
+        },
+        {
+          "token": "school",
+          "prob": 0.06603120267391205
+        },
+        {
+          "token": "professor",
+          "prob": 0.059945013374090195
+        },
+        {
+          "token": "president",
+          "prob": 0.053260646760463715
+        },
+        {
+          "token": "firm",
+          "prob": 0.04409807175397873
+        }
+      ],
+      "diff": {
+        "identical": false,
+        "num_positions_changed": 10,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "director",
+            "base_prob": 0.20989978313446045,
+            "bent_token": "company",
+            "bent_prob": 0.2494105100631714,
+            "changed": true
+          },
+          {
+            "rank": 2,
+            "base_token": "author",
+            "base_prob": 0.18091334402561188,
+            "bent_token": "director",
+            "bent_prob": 0.1864435225725174,
+            "changed": true
+          },
+          {
+            "rank": 3,
+            "base_token": "professor",
+            "base_prob": 0.13465189933776855,
+            "bent_token": "author",
+            "bent_prob": 0.11833007633686066,
+            "changed": true
+          },
+          {
+            "rank": 4,
+            "base_token": "recipient",
+            "base_prob": 0.09659349918365479,
+            "bent_token": "organization",
+            "bent_prob": 0.07931017130613327,
+            "changed": true
+          },
+          {
+            "rank": 5,
+            "base_token": "company",
+            "base_prob": 0.08486968278884888,
+            "bent_token": "founder",
+            "bent_prob": 0.07211438566446304,
+            "changed": true
+          },
+          {
+            "rank": 6,
+            "base_token": "founder",
+            "base_prob": 0.06540878117084503,
+            "bent_token": "artist",
+            "bent_prob": 0.0710562989115715,
+            "changed": true
+          },
+          {
+            "rank": 7,
+            "base_token": "president",
+            "base_prob": 0.06525962054729462,
+            "bent_token": "school",
+            "bent_prob": 0.06603120267391205,
+            "changed": true
+          },
+          {
+            "rank": 8,
+            "base_token": "artist",
+            "base_prob": 0.06207040324807167,
+            "bent_token": "professor",
+            "bent_prob": 0.059945013374090195,
+            "changed": true
+          },
+          {
+            "rank": 9,
+            "base_token": "winner",
+            "base_prob": 0.05407264456152916,
+            "bent_token": "president",
+            "bent_prob": 0.053260646760463715,
+            "changed": true
+          },
+          {
+            "rank": 10,
+            "base_token": "school",
+            "base_prob": 0.04626035690307617,
+            "bent_token": "firm",
+            "bent_prob": 0.04409807175397873,
+            "changed": true
+          }
+        ]
+      }
+    },
+    "The [MASK] is invited to speak at international conferences.": {
+      "base_topk": [
+        {
+          "token": "society",
+          "prob": 0.2012578397989273
+        },
+        {
+          "token": "author",
+          "prob": 0.15931254625320435
+        },
+        {
+          "token": "organization",
+          "prob": 0.11175350844860077
+        },
+        {
+          "token": "president",
+          "prob": 0.1077205240726471
+        },
+        {
+          "token": "school",
+          "prob": 0.08417051285505295
+        },
+        {
+          "token": "company",
+          "prob": 0.07846160233020782
+        },
+        {
+          "token": "group",
+          "prob": 0.0760153979063034
+        },
+        {
+          "token": "editor",
+          "prob": 0.06811799854040146
+        },
+        {
+          "token": "director",
+          "prob": 0.05714325234293938
+        },
+        {
+          "token": "recipient",
+          "prob": 0.05604676902294159
+        }
+      ],
+      "bent_topk": [
+        {
+          "token": "society",
+          "prob": 0.2012578397989273
+        },
+        {
+          "token": "author",
+          "prob": 0.15931254625320435
+        },
+        {
+          "token": "organization",
+          "prob": 0.11175350844860077
+        },
+        {
+          "token": "president",
+          "prob": 0.1077205240726471
+        },
+        {
+          "token": "school",
+          "prob": 0.08417051285505295
+        },
+        {
+          "token": "company",
+          "prob": 0.07846160233020782
+        },
+        {
+          "token": "group",
+          "prob": 0.0760153979063034
+        },
+        {
+          "token": "editor",
+          "prob": 0.06811799854040146
+        },
+        {
+          "token": "director",
+          "prob": 0.05714325234293938
+        },
+        {
+          "token": "recipient",
+          "prob": 0.05604676902294159
+        }
+      ],
+      "diff": {
+        "identical": true,
+        "num_positions_changed": 0,
+        "changes": [
+          {
+            "rank": 1,
+            "base_token": "society",
+            "base_prob": 0.2012578397989273,
+            "bent_token": "society",
+            "bent_prob": 0.2012578397989273,
+            "changed": false
+          },
+          {
+            "rank": 2,
+            "base_token": "author",
+            "base_prob": 0.15931254625320435,
+            "bent_token": "author",
+            "bent_prob": 0.15931254625320435,
+            "changed": false
+          },
+          {
+            "rank": 3,
+            "base_token": "organization",
+            "base_prob": 0.11175350844860077,
+            "bent_token": "organization",
+            "bent_prob": 0.11175350844860077,
+            "changed": false
+          },
+          {
+            "rank": 4,
+            "base_token": "president",
+            "base_prob": 0.1077205240726471,
+            "bent_token": "president",
+            "bent_prob": 0.1077205240726471,
+            "changed": false
+          },
+          {
+            "rank": 5,
+            "base_token": "school",
+            "base_prob": 0.08417051285505295,
+            "bent_token": "school",
+            "bent_prob": 0.08417051285505295,
+            "changed": false
+          },
+          {
+            "rank": 6,
+            "base_token": "company",
+            "base_prob": 0.07846160233020782,
+            "bent_token": "company",
+            "bent_prob": 0.07846160233020782,
+            "changed": false
+          },
+          {
+            "rank": 7,
+            "base_token": "group",
+            "base_prob": 0.0760153979063034,
+            "bent_token": "group",
+            "bent_prob": 0.0760153979063034,
+            "changed": false
+          },
+          {
+            "rank": 8,
+            "base_token": "editor",
+            "base_prob": 0.06811799854040146,
+            "bent_token": "editor",
+            "bent_prob": 0.06811799854040146,
+            "changed": false
+          },
+          {
+            "rank": 9,
+            "base_token": "director",
+            "base_prob": 0.05714325234293938,
+            "bent_token": "director",
+            "bent_prob": 0.05714325234293938,
+            "changed": false
+          },
+          {
+            "rank": 10,
+            "base_token": "recipient",
+            "base_prob": 0.05604676902294159,
+            "bent_token": "recipient",
+            "bent_prob": 0.05604676902294159,
+            "changed": false
+          }
+        ]
+      }
+    }
+  }
+}

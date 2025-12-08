@@ -1,0 +1,368 @@
+{
+  "model_name": "bert-base-uncased",
+  "prompts": [
+    "The role of the [MASK] is to protect the neighborhood.",
+    "When there is a crisis, the [MASK] is called."
+  ],
+  "inversion_pairs": [
+    [
+      "police",
+      "community care"
+    ],
+    [
+      "citizen",
+      "resident"
+    ]
+  ],
+  "dominant_words": [
+    "police"
+  ],
+  "marginalized_words": [
+    "community care"
+  ],
+  "drift_alpha": 0.6,
+  "inv_alpha": 0.6,
+  "top_k": 10,
+  "results": {
+    "The role of the [MASK] is to protect the neighborhood.": {
+      "baseline": [
+        {
+          "token": "mayor",
+          "prob": 0.23720958828926086
+        },
+        {
+          "token": "council",
+          "prob": 0.17471465468406677
+        },
+        {
+          "token": "police",
+          "prob": 0.1106903925538063
+        },
+        {
+          "token": "organization",
+          "prob": 0.09901804476976395
+        },
+        {
+          "token": "association",
+          "prob": 0.09088720381259918
+        },
+        {
+          "token": "guard",
+          "prob": 0.06588196754455566
+        },
+        {
+          "token": "patrol",
+          "prob": 0.059790197759866714
+        },
+        {
+          "token": "department",
+          "prob": 0.057706501334905624
+        },
+        {
+          "token": "officer",
+          "prob": 0.05681206285953522
+        },
+        {
+          "token": "community",
+          "prob": 0.04728933051228523
+        }
+      ],
+      "invert": [
+        {
+          "token": "mayor",
+          "prob": 0.23720958828926086
+        },
+        {
+          "token": "council",
+          "prob": 0.17471465468406677
+        },
+        {
+          "token": "police",
+          "prob": 0.1106903925538063
+        },
+        {
+          "token": "organization",
+          "prob": 0.09901804476976395
+        },
+        {
+          "token": "association",
+          "prob": 0.09088720381259918
+        },
+        {
+          "token": "guard",
+          "prob": 0.06588196754455566
+        },
+        {
+          "token": "patrol",
+          "prob": 0.059790197759866714
+        },
+        {
+          "token": "department",
+          "prob": 0.057706501334905624
+        },
+        {
+          "token": "officer",
+          "prob": 0.05681206285953522
+        },
+        {
+          "token": "community",
+          "prob": 0.04728933051228523
+        }
+      ],
+      "drift": [
+        {
+          "token": "mayor",
+          "prob": 0.2298898994922638
+        },
+        {
+          "token": "council",
+          "prob": 0.1693233996629715
+        },
+        {
+          "token": "police",
+          "prob": 0.10727476328611374
+        },
+        {
+          "token": "organization",
+          "prob": 0.09596259891986847
+        },
+        {
+          "token": "association",
+          "prob": 0.08808265626430511
+        },
+        {
+          "token": "community",
+          "prob": 0.07668761163949966
+        },
+        {
+          "token": "guard",
+          "prob": 0.06384901702404022
+        },
+        {
+          "token": "patrol",
+          "prob": 0.05794522538781166
+        },
+        {
+          "token": "department",
+          "prob": 0.055925823748111725
+        },
+        {
+          "token": "officer",
+          "prob": 0.05505898594856262
+        }
+      ],
+      "combo": [
+        {
+          "token": "mayor",
+          "prob": 0.2298898994922638
+        },
+        {
+          "token": "council",
+          "prob": 0.1693233996629715
+        },
+        {
+          "token": "police",
+          "prob": 0.10727476328611374
+        },
+        {
+          "token": "organization",
+          "prob": 0.09596259891986847
+        },
+        {
+          "token": "association",
+          "prob": 0.08808265626430511
+        },
+        {
+          "token": "community",
+          "prob": 0.07668761163949966
+        },
+        {
+          "token": "guard",
+          "prob": 0.06384901702404022
+        },
+        {
+          "token": "patrol",
+          "prob": 0.05794522538781166
+        },
+        {
+          "token": "department",
+          "prob": 0.055925823748111725
+        },
+        {
+          "token": "officer",
+          "prob": 0.05505898594856262
+        }
+      ]
+    },
+    "When there is a crisis, the [MASK] is called.": {
+      "baseline": [
+        {
+          "token": "doctor",
+          "prob": 0.17035233974456787
+        },
+        {
+          "token": "number",
+          "prob": 0.16869740188121796
+        },
+        {
+          "token": "action",
+          "prob": 0.14224182069301605
+        },
+        {
+          "token": "meeting",
+          "prob": 0.135504350066185
+        },
+        {
+          "token": "police",
+          "prob": 0.09969981014728546
+        },
+        {
+          "token": "emergency",
+          "prob": 0.060089848935604095
+        },
+        {
+          "token": "office",
+          "prob": 0.058235250413417816
+        },
+        {
+          "token": "name",
+          "prob": 0.05799388140439987
+        },
+        {
+          "token": "order",
+          "prob": 0.054053716361522675
+        },
+        {
+          "token": "person",
+          "prob": 0.05313161388039589
+        }
+      ],
+      "invert": [
+        {
+          "token": "doctor",
+          "prob": 0.17035233974456787
+        },
+        {
+          "token": "number",
+          "prob": 0.16869740188121796
+        },
+        {
+          "token": "action",
+          "prob": 0.14224182069301605
+        },
+        {
+          "token": "meeting",
+          "prob": 0.135504350066185
+        },
+        {
+          "token": "police",
+          "prob": 0.09969981014728546
+        },
+        {
+          "token": "emergency",
+          "prob": 0.060089848935604095
+        },
+        {
+          "token": "office",
+          "prob": 0.058235250413417816
+        },
+        {
+          "token": "name",
+          "prob": 0.05799388140439987
+        },
+        {
+          "token": "order",
+          "prob": 0.054053716361522675
+        },
+        {
+          "token": "person",
+          "prob": 0.05313161388039589
+        }
+      ],
+      "drift": [
+        {
+          "token": "doctor",
+          "prob": 0.17035233974456787
+        },
+        {
+          "token": "number",
+          "prob": 0.16869740188121796
+        },
+        {
+          "token": "action",
+          "prob": 0.14224182069301605
+        },
+        {
+          "token": "meeting",
+          "prob": 0.135504350066185
+        },
+        {
+          "token": "police",
+          "prob": 0.09969981014728546
+        },
+        {
+          "token": "emergency",
+          "prob": 0.060089848935604095
+        },
+        {
+          "token": "office",
+          "prob": 0.058235250413417816
+        },
+        {
+          "token": "name",
+          "prob": 0.05799388140439987
+        },
+        {
+          "token": "order",
+          "prob": 0.054053716361522675
+        },
+        {
+          "token": "person",
+          "prob": 0.05313161388039589
+        }
+      ],
+      "combo": [
+        {
+          "token": "doctor",
+          "prob": 0.17035233974456787
+        },
+        {
+          "token": "number",
+          "prob": 0.16869740188121796
+        },
+        {
+          "token": "action",
+          "prob": 0.14224182069301605
+        },
+        {
+          "token": "meeting",
+          "prob": 0.135504350066185
+        },
+        {
+          "token": "police",
+          "prob": 0.09969981014728546
+        },
+        {
+          "token": "emergency",
+          "prob": 0.060089848935604095
+        },
+        {
+          "token": "office",
+          "prob": 0.058235250413417816
+        },
+        {
+          "token": "name",
+          "prob": 0.05799388140439987
+        },
+        {
+          "token": "order",
+          "prob": 0.054053716361522675
+        },
+        {
+          "token": "person",
+          "prob": 0.05313161388039589
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "timestamp": "20251127_125729",
+  "bend_name": "plate_V_midlayer_relational_futures",
+  "axis": "latent",
+  "mode": "recoherent",
+  "model_name": "gpt2",
+  "args": {
+    "prompts": [
+      "The future of technology is",
+      "The future of public safety is",
+      "In the coming years, our cities will",
+      "In the long term, survival will depend on"
+    ],
+    "attractor_phrases": [
+      "we thrive together as a living network",
+      "care ripples through every relationship",
+      "resources circulate like water in a watershed",
+      "safety emerges from mutual aid and solidarity"
+    ],
+    "layer_index": 6,
+    "lambda": 0.5,
+    "max_length": 60,
+    "model_name": "gpt2"
+  },
+  "attractor_phrases": [
+    "we thrive together as a living network",
+    "care ripples through every relationship",
+    "resources circulate like water in a watershed",
+    "safety emerges from mutual aid and solidarity"
+  ],
+  "layer_index": 6,
+  "lambda": 0.5,
+  "per_prompt": {
+    "The future of technology is": {
+      "baseline_text": "The future of technology is always evolving. As Google makes its Android mobile platform, it will be in the making but with the opportunity to build something truly special. One that will make everything possible.",
+      "bent_text": "The future of technology is already much one to, of is our most and a not more one.\n\nIn the year one and,.. of the the it. with the, one and, \" and of no the. the a the to \" ( an that the. for some or"
+    },
+    "The future of public safety is": {
+      "baseline_text": "The future of public safety is at stake,\" she said in the interview.\n\nAccording to the report, the government was still investigating whether the U.S. military was involved in an attempted bombing of the convoy, but the investigators concluded that the U.S. military carried out the attack because",
+      "bent_text": "The future of public safety is. not. the. a an as, from of. there, in the the is and that to be: a this and some and all \" that there with which \" I, not\n\nIn--in and for my. a a that will be very"
+    },
+    "In the coming years, our cities will": {
+      "baseline_text": "In the coming years, our cities will have to learn from the mistakes of our past, and I would like to ask why the government of New Zealand chose to build this massive infrastructure. What really got into the minds of many residents, especially those of the working class of New Zealand, was the government",
+      "bent_text": "In the coming years, our cities will make these all the, that that we will also you are a 'd, this is not to make their the to of an to that can a great that the only \" all over the most. of \" it of all the time, and the will with"
+    },
+    "In the long term, survival will depend on": {
+      "baseline_text": "In the long term, survival will depend on how much you use the material you have, not how long your life will be. People who live like this need to think twice about dying. Not every person is created equal.\n\nThe average person lives about 100 years, and when your life is",
+      "bent_text": "In the long term, survival will depend on more not in the more a new (, and there a good. the way that not you have what the people all all this in a more, and those as the one of no a new one or \" it of and is\n all being not be"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+experiment_type: embedding_masked
+bend_name: plate_I_scientist_midwife
+axis: embedding/semantic
+mode: revelatory
+log_dir: runs
+
+model_name: bert-base-uncased
+
+prompts:
+  - "The [MASK] conducted the experiment carefully."
+  - "The [MASK] published their findings in a major journal."
+  - "In the delivery room, the [MASK] is trusted with complex decisions."
+  - "The [MASK] is recognized as an expert in their field."
+  - "The [MASK] is invited to speak at international conferences."
+
+role_vocab:
+  - scientist
+  - researcher
+  - expert
+  - doctor
+  - midwife
+  - nurse
+  - doula
+
+bend:
+  type: cluster_drift
+  alpha: 0.6
+  from_cluster:
+    - "scientist"
+    - "researcher"
+    - "expert"
+  to_cluster:
+    - "midwife"
+    - "nurse"
+    - "doula"
