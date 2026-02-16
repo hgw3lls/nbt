@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar
 
-import yaml
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -143,32 +142,6 @@ class Experiment(ABC):
         if not artifacts_dir.exists():
             return []
         return sorted(path for path in artifacts_dir.glob("**/*") if path.is_file())
-
-    def recommended_figure_specs(self, run_dir: Path) -> list[dict[str, Any]]:
-        """Return optional figure spec payloads to emit into run_dir/figure_specs."""
-        return []
-
-    def emit_figure_specs(self, run_dir: Path) -> list[Path]:
-        """Write recommended figure specs into run_dir/figure_specs."""
-        specs = self.recommended_figure_specs(run_dir)
-        if not specs:
-            return []
-
-        specs_dir = run_dir / "figure_specs"
-        specs_dir.mkdir(parents=True, exist_ok=True)
-
-        written: list[Path] = []
-        for idx, payload in enumerate(specs, start=1):
-            if not isinstance(payload, dict):
-                continue
-            figure_id = str(payload.get("figure_id", f"figure_{idx}"))
-            safe_id = figure_id.replace("/", "_").replace(" ", "_")
-            out_path = specs_dir / f"{safe_id}.yaml"
-            with out_path.open("w", encoding="utf-8") as handle:
-                yaml.safe_dump(payload, handle, sort_keys=False)
-            written.append(out_path)
-
-        return written
 
     @abstractmethod
     def run(self, context: RunContext) -> None:

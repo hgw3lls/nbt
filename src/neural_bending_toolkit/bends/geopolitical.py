@@ -372,66 +372,6 @@ class GeopoliticalBend(Experiment):
         context.log_event("Completed phase 3", phase="justice_attractors")
         return {"results": results}
 
-    def recommended_figure_specs(self, run_dir: Path) -> list[dict[str, Any]]:
-        """Emit baseline dissertation figure specs for this run."""
-        run_pattern = str(run_dir)
-        return [
-            {
-                "figure_id": "geo_embedding_similarity",
-                "title": "Geopolitical Embedding Similarity",
-                "input_run_dirs": [run_pattern],
-                "plot_type": "embedding_similarity_heatmap",
-                "inputs": {
-                    "similarity_csv": (
-                        "artifacts/geopolitical/phase_1_ontology_mapping/"
-                        "*_similarity.csv"
-                    )
-                },
-                "output_format": {"png": True, "pdf": True},
-                "caption_template_variables": {
-                    "bend": "geopolitical",
-                    "limit": "embedding alignment drift",
-                    "threshold": "concept cluster inversion",
-                },
-            },
-            {
-                "figure_id": "geo_refusal_rate",
-                "title": "Geopolitical Refusal Rate",
-                "input_run_dirs": [run_pattern],
-                "plot_type": "refusal_rate_table_to_figure",
-                "inputs": {
-                    "phase2_json": (
-                        "artifacts/geopolitical/phase_2_governance_dissonance/"
-                        "governance_dissonance_results.json"
-                    )
-                },
-                "output_format": {"png": True, "pdf": True},
-                "caption_template_variables": {
-                    "bend": "governance_dissonance",
-                    "limit": "contradiction handling",
-                    "threshold": "refusal onset",
-                },
-            },
-            {
-                "figure_id": "geo_attractor_density",
-                "title": "Geopolitical Attractor Density",
-                "input_run_dirs": [run_pattern],
-                "plot_type": "attractor_density_comparison",
-                "inputs": {
-                    "phase3_json": (
-                        "artifacts/geopolitical/phase_3_justice_attractors/"
-                        "justice_attractor_results.json"
-                    )
-                },
-                "output_format": {"png": True, "pdf": True},
-                "caption_template_variables": {
-                    "bend": "justice_attractors",
-                    "limit": "attractor persistence",
-                    "threshold": "density uplift",
-                },
-            },
-        ]
-
     def run(self, context: RunContext) -> None:
         self._seed_all(self.config.random_seed, context)
 

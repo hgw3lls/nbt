@@ -62,11 +62,3 @@ nbt geopolitical run --config configs/geopolitical.example.yaml
 nbt geopolitical report runs/<timestamp>_geopolitical-bend
 nbt geopolitical compare runs/<run1> runs/<run2>
 ```
-
-
-## Figure building
-
-```bash
-nbt figure build --spec figures/specs/embedding_similarity_heatmap.yaml
-nbt figure build-from-run runs/<timestamp>_geopolitical-bend
-```

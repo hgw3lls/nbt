@@ -44,13 +44,6 @@ def run_experiment(
     experiment = experiment_cls(config)
     try:
         experiment.run(context)
-        emitted_specs = experiment.emit_figure_specs(run_dir)
-        if emitted_specs:
-            context.log_event(
-                "Emitted recommended figure specs",
-                count=len(emitted_specs),
-                specs=[str(path) for path in emitted_specs],
-            )
     finally:
         context.close()
     return run_dir

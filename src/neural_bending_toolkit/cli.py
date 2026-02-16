@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
@@ -14,18 +13,10 @@ from neural_bending_toolkit.analysis.geopolitical_report import (
     generate_geopolitical_report,
 )
 from neural_bending_toolkit.analysis.report import generate_markdown_report
-from neural_bending_toolkit.figures import (
-    build_figure_from_spec,
-    build_figures_from_run,
-)
 from neural_bending_toolkit.registry import ExperimentRegistry
 from neural_bending_toolkit.runner import run_experiment
 
 app = typer.Typer(help="Neural Bending Toolkit command-line interface.")
-init_app = typer.Typer(help="Project initialization commands.")
-figure_app = typer.Typer(help="Figure build commands.")
-app.add_typer(init_app, name="init")
-app.add_typer(figure_app, name="figure")
 
 
 GEOPOLITICAL_EXPERIMENT = "geopolitical-bend"
@@ -37,37 +28,6 @@ def _load_registry() -> ExperimentRegistry:
     registry = ExperimentRegistry()
     registry.discover()
     return registry
-
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
-
-
-@app.command("docs")
-def docs() -> None:
-    """Print core documentation and template locations."""
-    root = _repo_root()
-    docs_dir = root / "docs"
-    templates_dir = root / "templates"
-
-    lines = [
-        "Neural Bending Toolkit documentation guide",
-        "",
-        f"Repo root: {root}",
-        f"Docs directory: {docs_dir}",
-        f"Templates directory: {templates_dir}",
-        "",
-        "Start with:",
-        f"- {docs_dir / 'OVERVIEW.md'}",
-        f"- {docs_dir / 'RUNS_AND_ARTIFACTS.md'}",
-        f"- {docs_dir / 'FIGURES_AND_REPORTS.md'}",
-        f"- {docs_dir / 'GEOPOLITICAL_BEND.md'}",
-        "",
-        "Dissertation setup:",
-        "- Run `nbt init dissertation` to create dissertation/ scaffolding.",
-        "- Use templates/ for theory memos, captions, and methods appendix drafts.",
-    ]
-    typer.echo("\n".join(lines))
 
 
 @app.command("list")
@@ -181,86 +141,3 @@ def geopolitical_compare(
 
     typer.echo(f"Geopolitical comparison CSV: {csv_path}")
     typer.echo(f"Geopolitical comparison summary: {md_path}")
-
-
-@init_app.command("dissertation")
-def init_dissertation(
-    target: Annotated[Path, typer.Option("--path", help="Output root path")] = Path(
-        "."
-    ),
-) -> None:
-    """Initialize dissertation research-creation folder scaffold."""
-    root = target.resolve()
-    dissertation_dir = root / "dissertation"
-    subdirs = ["figures", "tables", "memos", "exports"]
-
-    dissertation_dir.mkdir(parents=True, exist_ok=True)
-    for subdir in subdirs:
-        (dissertation_dir / subdir).mkdir(parents=True, exist_ok=True)
-
-    readme = dissertation_dir / "README.md"
-    created_utc = datetime.now(timezone.utc).isoformat()
-    readme.write_text(
-        "\n".join(
-            [
-                "# Dissertation Workspace",
-                "",
-                f"Created (UTC): {created_utc}",
-                "",
-                "## Workflow",
-                "1. Run experiments in `runs/` using NBT CLI.",
-                "2. Generate reports with `nbt report` or `nbt geopolitical report`.",
-                (
-                    "3. Copy or curate selected artifacts into "
-                    "`dissertation/figures` and `dissertation/exports`."
-                ),
-                (
-                    "4. Draft interpretive notes in `dissertation/memos` "
-                    "using templates/theory_memo.md."
-                ),
-                "5. Build chapter tables in `dissertation/tables`.",
-                "",
-                "## Suggested command sequence",
-                "- `nbt init dissertation`",
-                "- `nbt list`",
-                "- `nbt run <experiment> --config <config.yaml>`",
-                "- `nbt report runs/<timestamp>_<experiment>`",
-                "- `nbt docs`",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-
-    typer.echo(f"Initialized dissertation workspace: {dissertation_dir}")
-
-
-@figure_app.command("build")
-def figure_build(
-    spec: Annotated[Path, typer.Option("--spec", exists=True, dir_okay=False)],
-) -> None:
-    """Build one dissertation figure from a YAML spec."""
-    if spec.suffix.lower() not in {".yaml", ".yml"}:
-        raise typer.BadParameter("Spec must be a YAML file (.yaml/.yml).")
-
-    try:
-        output_dir = build_figure_from_spec(spec)
-    except Exception as err:
-        raise typer.BadParameter(f"Failed to build figure from spec: {err}") from err
-
-    typer.echo(f"Figure built: {output_dir}")
-
-
-@figure_app.command("build-from-run")
-def figure_build_from_run(
-    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
-) -> None:
-    """Build all figure specs emitted in run_dir/figure_specs."""
-    try:
-        outputs = build_figures_from_run(run_dir)
-    except Exception as err:
-        raise typer.BadParameter(f"Failed to build figures from run: {err}") from err
-
-    typer.echo(f"Built {len(outputs)} figure(s):")
-    for output in outputs:
-        typer.echo(f"- {output}")
