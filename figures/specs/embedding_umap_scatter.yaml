@@ -1,0 +1,14 @@
+figure_id: embedding_umap_scatter_example
+title: Embedding UMAP Scatter
+input_run_dirs:
+  - runs/*_geopolitical-bend
+plot_type: embedding_umap_scatter
+inputs:
+  umap_npy: artifacts/geopolitical/phase_1_ontology_mapping/*_umap.npy
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: geopolitical
+  limit: embedding separability
+  threshold: cluster overlap

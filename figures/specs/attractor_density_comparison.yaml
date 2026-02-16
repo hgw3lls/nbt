@@ -1,0 +1,14 @@
+figure_id: attractor_density_comparison_example
+title: Attractor Density Comparison
+input_run_dirs:
+  - runs/*_geopolitical-bend
+plot_type: attractor_density_comparison
+inputs:
+  phase3_json: artifacts/geopolitical/phase_3_justice_attractors/justice_attractor_results.json
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: justice_attractors
+  limit: attractor persistence
+  threshold: density inflection

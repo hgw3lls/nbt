@@ -1,0 +1,16 @@
+figure_id: divergence_bar_chart_example
+title: Divergence Metrics Comparison
+input_run_dirs:
+  - runs/*
+plot_type: divergence_bar_chart
+inputs:
+  metric_names:
+    - distribution_kl
+    - js_divergence
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: sampling
+  limit: distribution drift
+  threshold: divergence increase

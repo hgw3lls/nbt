@@ -1,0 +1,16 @@
+figure_id: montage_grid_example
+title: Montage Grid (Image/Audio)
+input_run_dirs:
+  - runs/*
+plot_type: montage_grid
+inputs:
+  image_glob: artifacts/**/*.png
+  audio_glob: artifacts/**/*.wav
+  max_items: 6
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: multimodal
+  limit: media coherence
+  threshold: visual-sonic drift

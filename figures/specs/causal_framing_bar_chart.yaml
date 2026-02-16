@@ -1,0 +1,14 @@
+figure_id: causal_framing_bar_chart_example
+title: Structural vs Individual Causality
+input_run_dirs:
+  - runs/*_geopolitical-bend
+plot_type: causal_framing_bar_chart
+inputs:
+  phase2_json: artifacts/geopolitical/phase_2_governance_dissonance/governance_dissonance_results.json
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: governance_dissonance
+  limit: causal framing bias
+  threshold: structural/individual flip

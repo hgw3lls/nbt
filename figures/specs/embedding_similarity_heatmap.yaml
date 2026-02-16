@@ -1,0 +1,14 @@
+figure_id: embedding_similarity_heatmap_example
+title: Embedding Similarity Heatmap
+input_run_dirs:
+  - runs/*_geopolitical-bend
+plot_type: embedding_similarity_heatmap
+inputs:
+  similarity_csv: artifacts/geopolitical/phase_1_ontology_mapping/*_similarity.csv
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: geopolitical
+  limit: conceptual embedding adjacency
+  threshold: similarity collapse

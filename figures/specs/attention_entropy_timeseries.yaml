@@ -1,0 +1,14 @@
+figure_id: attention_entropy_timeseries_example
+title: Attention Entropy Timeseries
+input_run_dirs:
+  - runs/*
+plot_type: attention_entropy_timeseries
+inputs:
+  events_jsonl: events.jsonl
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: generic
+  limit: attention stability
+  threshold: entropy spike
