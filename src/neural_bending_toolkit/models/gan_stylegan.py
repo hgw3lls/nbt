@@ -7,6 +7,8 @@ from typing import Any
 
 import numpy as np
 
+from neural_bending_toolkit.models.torch_device import normalize_torch_device
+
 
 class StyleGANAdapter:
     """Wrapper for loading and running StyleGAN-style generators."""
@@ -28,7 +30,7 @@ class StyleGANAdapter:
             ) from exc
 
         self._torch = torch
-        self.device = device
+        self.device = normalize_torch_device(device)
         self.latent_dim = latent_dim
         self.truncation_psi = truncation_psi
         self.generator = self._load_generator(Path(checkpoint_path))

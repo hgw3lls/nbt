@@ -7,6 +7,8 @@ from typing import Any
 
 import numpy as np
 
+from neural_bending_toolkit.models.torch_device import normalize_torch_device
+
 
 @dataclass
 class GenerationResult:
@@ -31,11 +33,11 @@ class HuggingFaceCausalLMAdapter:
             ) from exc
 
         self._torch = torch
+        self.device = normalize_torch_device(device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
-        self.model.to(device)
+        self.model.to(self.device)
         self.model.eval()
-        self.device = device
 
         has_pad = self.tokenizer.pad_token_id is not None
         has_eos = self.tokenizer.eos_token_id is not None
