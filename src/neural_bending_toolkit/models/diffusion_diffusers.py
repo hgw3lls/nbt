@@ -10,6 +10,27 @@ from typing import Any
 import numpy as np
 
 
+class _TorchXPUStub:
+    """Fallback `torch.xpu` namespace for environments without Intel XPU support."""
+
+    @staticmethod
+    def empty_cache() -> None:
+        """No-op empty cache implementation used by diffusers import-time checks."""
+
+    @staticmethod
+    def is_available() -> bool:
+        """Report unavailable XPU support in CPU-only environments."""
+
+        return False
+
+
+def _ensure_torch_xpu_namespace(torch_module: Any) -> None:
+    """Provide `torch.xpu` when absent so diffusers can import on CPU-only builds."""
+
+    if not hasattr(torch_module, "xpu"):
+        torch_module.xpu = _TorchXPUStub()  # type: ignore[attr-defined]
+
+
 @dataclass
 class DiffusionGenerationResult:
     """Container for generated images and captured attention artifacts."""
@@ -140,11 +161,19 @@ class DiffusersStableDiffusionAdapter:
     ) -> None:
         try:
             import torch
+
+            _ensure_torch_xpu_namespace(torch)
             from diffusers import StableDiffusionPipeline
         except ModuleNotFoundError as exc:
             raise RuntimeError(
                 "diffusers + torch are required for DiffusersStableDiffusionAdapter. "
                 "Install with: pip install .[diffusion]"
+            ) from exc
+        except AttributeError as exc:
+            raise RuntimeError(
+                "Incompatible torch/diffusers installation. "
+                "Try upgrading torch and diffusers together, "
+                "or reinstall with: pip install --upgrade '.[diffusion]'"
             ) from exc
 
         self._torch = torch
