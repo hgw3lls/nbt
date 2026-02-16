@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PYTHONPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/src${PYTHONPATH:+:$PYTHONPATH}" \
+python -m neural_bending_toolkit "$@"

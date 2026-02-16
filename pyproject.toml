@@ -1,0 +1,103 @@
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neural_bending_toolkit"
+version = "0.1.0"
+description = "Production-grade scaffold for the Neural Bending Toolkit."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Neural Bending Toolkit Contributors" }]
+keywords = ["toolkit", "experiments", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "numpy>=1.26,<3.0",
+  "pydantic>=2.7,<3.0",
+  "pydantic-settings>=2.3,<3.0",
+  "pyyaml>=6.0,<7.0",
+  "typer>=0.12,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=24.0.0",
+  "pytest>=8.0.0",
+  "ruff>=0.5.0",
+]
+images = ["pillow>=10.0.0"]
+wandb = ["wandb>=0.17.0"]
+torch = ["torch>=2.0.0"]
+llm = [
+  "transformers>=4.40.0",
+  "torch>=2.0.0",
+]
+diffusion = [
+  "diffusers>=0.30.0",
+  "transformers>=4.40.0",
+  "torch>=2.0.0",
+]
+gan = [
+  "torch>=2.0.0",
+  "pillow>=10.0.0",
+]
+audio = [
+  "numpy>=1.26",
+  "torch>=2.0.0",
+  "audiocraft>=1.3.0",
+]
+analysis = [
+  "matplotlib>=3.8.0",
+  "umap-learn>=0.5.6",
+  "pillow>=10.0.0",
+]
+
+[project.scripts]
+nbt = "neural_bending_toolkit.cli:app"
+
+[project.entry-points."nbt.experiments"]
+hello = "neural_bending_toolkit.experiments.hello:HelloExperiment"
+llm_sampling_stratigraphy = "neural_bending_toolkit.experiments.llm_sampling_stratigraphy:LLMSamplingStratigraphy"
+embedding_contamination_diffusion = "neural_bending_toolkit.experiments.embedding_contamination_diffusion:EmbeddingContaminationDiffusion"
+gan_stratigraphy_edges = "neural_bending_toolkit.experiments.gan_stratigraphy_edges:GANStratigraphyEdges"
+audio_inter_head_drift = "neural_bending_toolkit.experiments.audio_inter_head_drift:AudioInterHeadDrift"
+family_embedding_contamination = "neural_bending_toolkit.experiments.dissertation_bends:EmbeddingContaminationFamily"
+family_corpus_stratigraphy = "neural_bending_toolkit.experiments.dissertation_bends:CorpusStratigraphyFamily"
+family_inter_head_drift = "neural_bending_toolkit.experiments.dissertation_bends:InterHeadDriftFamily"
+family_governance_dissonance = "neural_bending_toolkit.experiments.dissertation_bends:GovernanceDissonanceFamily"
+family_residual_distortion = "neural_bending_toolkit.experiments.dissertation_bends:ResidualDistortionFamily"
+family_norm_perturbation = "neural_bending_toolkit.experiments.dissertation_bends:NormPerturbationFamily"
+family_justice_reweighting = "neural_bending_toolkit.experiments.dissertation_bends:JusticeReweightingFamily"
+family_justice_attractors = "neural_bending_toolkit.experiments.dissertation_bends:JusticeAttractorsFamily"
+geopolitical_bend = "neural_bending_toolkit.bends.geopolitical:GeopoliticalBend"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
