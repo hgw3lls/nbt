@@ -33,27 +33,6 @@ def _ensure_torch_xpu_namespace(torch_module: Any) -> None:
         torch_module.xpu = _TorchXPUStub()  # type: ignore[attr-defined]
 
 
-class _TorchXPUStub:
-    """Fallback `torch.xpu` namespace for environments without Intel XPU support."""
-
-    @staticmethod
-    def empty_cache() -> None:
-        """No-op empty cache implementation used by diffusers import-time checks."""
-
-    @staticmethod
-    def is_available() -> bool:
-        """Report unavailable XPU support in CPU-only environments."""
-
-        return False
-
-
-def _ensure_torch_xpu_namespace(torch_module: Any) -> None:
-    """Provide `torch.xpu` when absent so diffusers can import on CPU-only builds."""
-
-    if not hasattr(torch_module, "xpu"):
-        torch_module.xpu = _TorchXPUStub()  # type: ignore[attr-defined]
-
-
 @dataclass
 class DiffusionGenerationResult:
     """Container for generated images and captured attention artifacts."""
