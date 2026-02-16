@@ -1,0 +1,14 @@
+figure_id: refusal_rate_table_example
+title: Refusal Rate Summary
+input_run_dirs:
+  - runs/*_geopolitical-bend
+plot_type: refusal_rate_table_to_figure
+inputs:
+  phase2_json: artifacts/geopolitical/phase_2_governance_dissonance/governance_dissonance_results.json
+output_format:
+  png: true
+  pdf: true
+caption_template_variables:
+  bend: governance_dissonance
+  limit: policy contradiction handling
+  threshold: refusal onset
