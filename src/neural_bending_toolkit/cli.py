@@ -8,13 +8,20 @@ from typing import Annotated
 
 import typer
 
+from neural_bending_toolkit.analysis.bend_classifier import write_bend_classification
+from neural_bending_toolkit.analysis.derived_metrics import write_derived_metrics
 from neural_bending_toolkit.analysis.geopolitical_report import (
     compare_geopolitical_runs,
     generate_geopolitical_report,
 )
-from neural_bending_toolkit.analysis.report import generate_markdown_report
-from neural_bending_toolkit.console.runtime import node_specs
-from neural_bending_toolkit.console.schema import validate_patch_graph
+from neural_bending_toolkit.analysis.report import (
+    generate_html_report,
+    generate_markdown_report,
+)
+from neural_bending_toolkit.analysis.theory_memo_generator import (
+    build_theory_memo,
+    build_theory_memos_for_runs,
+)
 from neural_bending_toolkit.registry import ExperimentRegistry
 from neural_bending_toolkit.runner import run_experiment
 
@@ -24,8 +31,10 @@ app = typer.Typer(help="Neural Bending Toolkit command-line interface.")
 GEOPOLITICAL_EXPERIMENT = "geopolitical-bend"
 geopolitical_app = typer.Typer(help="Geopolitical Bend experiment commands.")
 app.add_typer(geopolitical_app, name="geopolitical")
-console_app = typer.Typer(help="Neural Bending Console commands.")
-app.add_typer(console_app, name="console")
+analyze_app = typer.Typer(help="Post-run derived metric analysis and classification.")
+app.add_typer(analyze_app, name="analyze")
+memo_app = typer.Typer(help="Build theory memos from run outputs.")
+app.add_typer(memo_app, name="memo")
 
 
 def _load_registry() -> ExperimentRegistry:
@@ -69,6 +78,99 @@ def report(run_dir: Path, output: str = "report.md") -> None:
     """Generate a markdown report with analysis and artifact citations."""
     report_path = generate_markdown_report(run_dir=run_dir, output_name=output)
     typer.echo(f"Report generated: {report_path}")
+
+
+@app.command("curate")
+def curate(
+    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Curate memo, analysis, reports, and top figures into one export folder."""
+    run_dir = Path(run_dir)
+    markdown_report = generate_markdown_report(run_dir, output_name="report.md")
+    html_report = generate_html_report(run_dir, output_name="report.html")
+
+    analysis_dir = run_dir / "analysis"
+    outputs = [
+        run_dir / "theory_memo.md",
+        analysis_dir / "bend_classification.json",
+        analysis_dir / "derived_metrics.json",
+        markdown_report,
+        html_report,
+    ]
+
+    figures = sorted(
+        list((analysis_dir).glob("**/*.png"))
+        + list((run_dir / "artifacts").glob("**/*.png"))
+    )
+    top_figures = figures[:4]
+
+    curated_dir = run_dir / "curated"
+    curated_dir.mkdir(parents=True, exist_ok=True)
+    caption_lines = ["# Curated Figure Captions", ""]
+
+    for path in outputs + top_figures:
+        if not path.exists():
+            continue
+        target = curated_dir / path.name
+        target.write_bytes(path.read_bytes())
+        typer.echo(f"Curated: {target}")
+        if path in top_figures:
+            caption_lines.append(f"- `{path.name}`: auto-curated top figure reference")
+
+    (curated_dir / "caption.md").write_text(
+        "\n".join(caption_lines) + "\n", encoding="utf-8"
+    )
+    typer.echo(f"Curated bundle created: {curated_dir}")
+
+
+@analyze_app.command("derive")
+def analyze_derive(
+    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Derive standardized metrics from run outputs."""
+    out_path = write_derived_metrics(run_dir)
+    typer.echo(f"Derived metrics written: {out_path}")
+
+
+@analyze_app.command("classify")
+def analyze_classify(
+    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Classify run bend type from derived metrics."""
+    out_path = write_bend_classification(run_dir)
+    typer.echo(f"Bend classification written: {out_path}")
+
+
+@analyze_app.command("all")
+def analyze_all(
+    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Run derive + classify in sequence for a run directory."""
+    derived_path = write_derived_metrics(run_dir)
+    class_path = write_bend_classification(run_dir)
+    typer.echo(f"Derived metrics written: {derived_path}")
+    typer.echo(f"Bend classification written: {class_path}")
+
+
+@memo_app.command("build")
+def memo_build(
+    run_dir: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Build theory memo for one run."""
+    out_path = build_theory_memo(run_dir)
+    typer.echo(f"Theory memo generated: {out_path}")
+
+
+@memo_app.command("build-all")
+def memo_build_all(
+    runs_root: Annotated[Path, typer.Argument(exists=True, file_okay=False)],
+) -> None:
+    """Build theory memos for all run directories under runs_root."""
+    outputs = build_theory_memos_for_runs(runs_root)
+    for path in outputs:
+        typer.echo(f"Theory memo generated: {path}")
+    if not outputs:
+        typer.echo("No run directories found with config.yaml")
 
 
 @geopolitical_app.command("describe")

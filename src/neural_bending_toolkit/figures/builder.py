@@ -13,7 +13,12 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
-from neural_bending_toolkit.figures.specs import FigureSpec, PlotType, load_figure_spec
+from neural_bending_toolkit.figures.specs import (
+    FigureSpec,
+    PlotType,
+    load_figure_spec,
+    save_figure_spec,
+)
 
 
 def _utc_now() -> str:
@@ -416,12 +421,62 @@ def build_figures_from_run(run_dir: Path, repo_root: Path | None = None) -> list
     """Build all figure specs found in run_dir/figure_specs."""
     run_dir = run_dir.resolve()
     specs_dir = run_dir / "figure_specs"
-    if not specs_dir.exists():
-        raise ValueError(f"No figure_specs directory found in run: {run_dir}")
+    specs_dir.mkdir(parents=True, exist_ok=True)
 
     spec_files = sorted(list(specs_dir.glob("*.yaml")) + list(specs_dir.glob("*.yml")))
     if not spec_files:
-        raise ValueError(f"No figure spec files found in: {specs_dir}")
+        spec_files = _emit_default_specs(run_dir, specs_dir)
 
     outputs = [build_figure_from_spec(path, repo_root=repo_root) for path in spec_files]
     return outputs
+
+
+def _emit_default_specs(run_dir: Path, specs_dir: Path) -> list[Path]:
+    """Emit default figure specs when none are present in a run."""
+    derived = _read_json(run_dir / "analysis" / "derived_metrics.json", default={})
+    classification = _read_json(
+        run_dir / "analysis" / "bend_classification.json", default={}
+    )
+    plot_types: list[str] = ["divergence_bar_chart"]
+
+    bend_tag = str(classification.get("bend_tag", ""))
+    if "disruptive" in bend_tag:
+        plot_types.append("attention_entropy_timeseries")
+
+    if isinstance(derived, dict) and isinstance(
+        derived.get("attractor_density_delta"), (int, float)
+    ):
+        phase3_path = (
+            run_dir
+            / "artifacts"
+            / "geopolitical"
+            / "phase_3_justice_attractors"
+            / "justice_attractor_results.json"
+        )
+        if phase3_path.exists():
+            plot_types.append("attractor_density_comparison")
+
+    if list((run_dir / "artifacts").glob("**/*.png")):
+        plot_types.append("montage_grid")
+
+    emitted: list[Path] = []
+    for idx, plot_type in enumerate(plot_types, start=1):
+        figure_id = f"{run_dir.name}_auto_{idx}"
+        spec_payload = {
+            "figure_id": figure_id,
+            "title": f"Auto figure: {plot_type}",
+            "input_run_dirs": [str(run_dir)],
+            "plot_type": plot_type,
+            "inputs": {},
+            "output_format": {"png": True, "pdf": True},
+            "caption_template_variables": {
+                "limit": "auto-selected from derived metrics",
+                "threshold": "auto-selected from bend classification",
+            },
+        }
+        spec = FigureSpec.model_validate(spec_payload)
+        out_path = specs_dir / f"{spec.figure_id}.yaml"
+        save_figure_spec(spec, out_path)
+        emitted.append(out_path)
+
+    return emitted
