@@ -7,7 +7,7 @@ A production-grade Python toolkit scaffold for experiments and command-line work
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .[dev]
+pip install -e ".[dev]"
 nbt --help
 ```
 
@@ -61,22 +61,22 @@ black --check .
 pytest
 ```
 
-See [`docs/`](docs/) for documentation stubs and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+See [`Install.md`](Install.md) for installation workflows, [`docs/`](docs/) for documentation stubs, and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
 
 ## LLM adapter
 
 A Hugging Face adapter is available in `models/llm_hf.py` with a CPU-friendly default model: `sshleifer/tiny-gpt2`.
-Install with optional extras: `pip install -e .[llm]`.
+Install with optional extras: `pip install -e ".[llm]"`.
 
 A Diffusers adapter is available in `models/diffusion_diffusers.py` with a CPU-friendly default model: `hf-internal-testing/tiny-stable-diffusion-pipe`.
-Install with optional extras: `pip install -e .[diffusion]`.
+Install with optional extras: `pip install -e ".[diffusion]"`.
 
 A StyleGAN adapter is available in `models/gan_stylegan.py` for local checkpoints.
-Install with optional extras: `pip install -e .[gan]`.
+Install with optional extras: `pip install -e ".[gan]"`.
 
 An audio adapter is available in `models/audio_gen.py` (MusicGen if available, else proxy).
-Install with optional extras: `pip install -e .[audio]`.
+Install with optional extras: `pip install -e ".[audio]"`.
 
 
 ## Dissertation bend families
