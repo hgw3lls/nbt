@@ -97,7 +97,8 @@ class HookedCrossAttentionProcessor:
             hidden_states = hidden_states.transpose(1, 2)
 
         query = attn.to_q(hidden_states)
-        encoder_hidden_states = encoder_hidden_states or hidden_states
+        if encoder_hidden_states is None:
+            encoder_hidden_states = hidden_states
 
         if attn.norm_cross:
             encoder_hidden_states = attn.norm_encoder_hidden_states(
