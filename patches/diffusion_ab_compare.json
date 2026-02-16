@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    {"id": "prompt", "type": "PromptSourceNode", "params": {"text": "A city at dusk"}, "ui": {"x": 50, "y": 100}, "enabled": true},
+    {"id": "emb_contam", "type": "EmbeddingContaminationNode", "params": {"enabled": true, "dry_wet": 0.4, "concept_a": "industry", "concept_b": "ecology"}, "ui": {"x": 260, "y": 220}, "enabled": true},
+    {"id": "diff_base", "type": "DiffusionVoiceNode", "params": {"guidance_scale": 7.5, "num_steps": 5}, "ui": {"x": 360, "y": 60}, "enabled": true},
+    {"id": "gov", "type": "GovernanceDissonanceNode", "params": {"enabled": true, "dry_wet": 0.6}, "ui": {"x": 520, "y": 220}, "enabled": true},
+    {"id": "diff_bent", "type": "DiffusionVoiceNode", "params": {"guidance_scale": 9.0, "num_steps": 5}, "ui": {"x": 740, "y": 220}, "enabled": true},
+    {"id": "compare", "type": "CompareNode", "params": {}, "ui": {"x": 980, "y": 140}, "enabled": true}
+  ],
+  "edges": [
+    {"id": "d1", "from_node": "prompt", "from_port": "text", "to_node": "diff_base", "to_port": "prompt"},
+    {"id": "d2", "from_node": "prompt", "from_port": "text", "to_node": "gov", "to_port": "text"},
+    {"id": "d3", "from_node": "gov", "from_port": "text", "to_node": "diff_bent", "to_port": "prompt"},
+    {"id": "d4", "from_node": "emb_contam", "from_port": "embedding", "to_node": "diff_bent", "to_port": "embedding"},
+    {"id": "d5", "from_node": "diff_base", "from_port": "image_path", "to_node": "compare", "to_port": "baseline_image"},
+    {"id": "d6", "from_node": "diff_bent", "from_port": "image_path", "to_node": "compare", "to_port": "bent_image"}
+  ],
+  "globals": {"tick_rate": 30}
+}

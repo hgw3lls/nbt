@@ -1,0 +1,468 @@
+{
+  "globals": {
+    "seed": 1337,
+    "tick_rate": 30,
+    "safety_latch_mode": "latch_on_boundaries",
+    "notes": "Starter patch: baseline vs bent A/B. Eight dissertation bends are present as modules with bypass + dry/wet. This patch is designed to work even if some bends are implemented as control-level proxies (CV/prompt conditioning) until deeper hooks are available."
+  },
+  "nodes": [
+    {
+      "id": "prompt_src",
+      "type": "PromptSourceNode",
+      "enabled": true,
+      "ui": { "x": 60, "y": 80 },
+      "params": {
+        "text": "Describe a peaceful protest that strengthens national stability. Then explain the causes in structural terms, not individual blame.",
+        "emit_mode": "static"
+      }
+    },
+
+    {
+      "id": "clock",
+      "type": "ClockNode",
+      "enabled": true,
+      "ui": { "x": 60, "y": 220 },
+      "params": { "mode": "token_tick", "pulse_every": 1 }
+    },
+
+    {
+      "id": "lfo_slow",
+      "type": "CV_LFONode",
+      "enabled": true,
+      "ui": { "x": 60, "y": 360 },
+      "params": {
+        "wave": "sine",
+        "rate_hz": 0.08,
+        "min": 0.0,
+        "max": 1.0
+      }
+    },
+
+    {
+      "id": "cv_noise",
+      "type": "CV_NoiseNode",
+      "enabled": true,
+      "ui": { "x": 60, "y": 500 },
+      "params": { "min": 0.0, "max": 1.0, "kind": "white" }
+    },
+
+    {
+      "id": "baseline_llm",
+      "type": "LLMVoiceNode",
+      "enabled": true,
+      "ui": { "x": 430, "y": 80 },
+      "params": {
+        "model_id": "hf:tiny-default",
+        "max_new_tokens": 220,
+        "temperature_base": 0.8,
+        "top_p_base": 0.92,
+        "top_k_base": 50,
+        "stream": true
+      }
+    },
+
+    {
+      "id": "bent_llm",
+      "type": "LLMVoiceNode",
+      "enabled": true,
+      "ui": { "x": 430, "y": 340 },
+      "params": {
+        "model_id": "hf:tiny-default",
+        "max_new_tokens": 220,
+        "temperature_base": 0.8,
+        "top_p_base": 0.92,
+        "top_k_base": 50,
+        "stream": true
+      }
+    },
+
+    {
+      "id": "diffusion_baseline",
+      "type": "DiffusionVoiceNode",
+      "enabled": false,
+      "ui": { "x": 430, "y": 610 },
+      "params": {
+        "model_id": "diffusers:sd-default",
+        "steps": 28,
+        "guidance_base": 6.5,
+        "width": 768,
+        "height": 768
+      }
+    },
+
+    {
+      "id": "diffusion_bent",
+      "type": "DiffusionVoiceNode",
+      "enabled": false,
+      "ui": { "x": 430, "y": 840 },
+      "params": {
+        "model_id": "diffusers:sd-default",
+        "steps": 28,
+        "guidance_base": 6.5,
+        "width": 768,
+        "height": 768
+      }
+    },
+
+    {
+      "id": "text_to_embed_a",
+      "type": "TextToEmbeddingNode",
+      "enabled": true,
+      "ui": { "x": 210, "y": 680 },
+      "params": { "backend": "clip_or_text_encoder", "mode": "prompt_embedding" }
+    },
+
+    {
+      "id": "text_to_embed_b",
+      "type": "TextToEmbeddingNode",
+      "enabled": true,
+      "ui": { "x": 210, "y": 820 },
+      "params": {
+        "backend": "clip_or_text_encoder",
+        "mode": "concept_embedding",
+        "concept_text": "mutual aid"
+      }
+    },
+
+    {
+      "id": "bend_01_embedding_contamination",
+      "type": "EmbeddingContaminationNode",
+      "enabled": true,
+      "ui": { "x": 720, "y": 740 },
+      "params": {
+        "bypass": false,
+        "dry_wet": 0.65,
+        "blend_amount": 0.55,
+        "curve": "slerp",
+        "notes": "Bend 1: Ontology as geometry (embedding contamination)."
+      }
+    },
+
+    {
+      "id": "bend_02_corpus_stratigraphy",
+      "type": "StratigraphySamplerNode",
+      "enabled": true,
+      "ui": { "x": 720, "y": 420 },
+      "params": {
+        "bypass": false,
+        "dry_wet": 0.55,
+        "anti_top_p": 0.35,
+        "low_prob_force": 0.25,
+        "temp_ramp": 0.15,
+        "notes": "Bend 2: Corpus stratigraphy (controlled low-prob forcing)."
+      }
+    },
+
+    {
+      "id": "bend_03_inter_head_drift",
+      "type": "InterHeadDriftNode",
+      "enabled": true,
+      "ui": { "x": 990, "y": 420 },
+      "params": {
+        "bypass": true,
+        "dry_wet": 0.35,
+        "head_scale": 0.25,
+        "drift_noise": 0.15,
+        "consensus_gate": 0.6,
+        "notes": "Bend 3: Governance as internal parliament (attention head drift). Defaults to bypass until attention hooks exist."
+      }
+    },
+
+    {
+      "id": "bend_04_governance_dissonance",
+      "type": "GovernanceDissonanceNode",
+      "enabled": true,
+      "ui": { "x": 1260, "y": 420 },
+      "params": {
+        "bypass": false,
+        "dry_wet": 0.45,
+        "dissonance_strength": 0.5,
+        "conflict_pair": ["protest", "stability"],
+        "mode": "prompt_conflict_or_crossattn",
+        "notes": "Bend 4: Coherence under strain (relevance conflict)."
+      }
+    },
+
+    {
+      "id": "bend_05_residual_distortion",
+      "type": "ResidualDistortionNode",
+      "enabled": true,
+      "ui": { "x": 1530, "y": 420 },
+      "params": {
+        "bypass": true,
+        "dry_wet": 0.35,
+        "noise_sigma": 0.18,
+        "bottleneck_dim": 0,
+        "apply_every_n_tokens": 8,
+        "notes": "Bend 5: Synthetic temporality (residual stream distortion). Defaults to bypass until residual hooks exist."
+      }
+    },
+
+    {
+      "id": "bend_06_norm_perturbation",
+      "type": "NormPerturbationNode",
+      "enabled": true,
+      "ui": { "x": 1800, "y": 420 },
+      "params": {
+        "bypass": true,
+        "dry_wet": 0.25,
+        "variance_scale": 1.15,
+        "swap_early_late": false,
+        "notes": "Bend 6: Fluency as discipline (normalization perturbation). Defaults to bypass until norm hooks exist."
+      }
+    },
+
+    {
+      "id": "bend_07_justice_reweighting",
+      "type": "JusticeReweightingNode",
+      "enabled": true,
+      "ui": { "x": 2070, "y": 420 },
+      "params": {
+        "bypass": false,
+        "dry_wet": 0.6,
+        "lexicon_name": "harm_reduction_core",
+        "strength": 0.55,
+        "gate_by_refusal": true,
+        "notes": "Bend 7: Governance reassembled (justice-oriented reweighting)."
+      }
+    },
+
+    {
+      "id": "bend_08_attractor_seeder",
+      "type": "AttractorSeederNode",
+      "enabled": true,
+      "ui": { "x": 2340, "y": 420 },
+      "params": {
+        "bypass": false,
+        "dry_wet": 0.55,
+        "attractor_set": "counter_coherence_v1",
+        "persistence": 0.75,
+        "decay": 0.05,
+        "notes": "Bend 8: Justice attractor basins (counter-coherence stabilization)."
+      }
+    },
+
+    {
+      "id": "cv_mix_bends",
+      "type": "CVMixerNode",
+      "enabled": true,
+      "ui": { "x": 990, "y": 560 },
+      "params": {
+        "mode": "sum_clamped",
+        "clamp_min": 0.0,
+        "clamp_max": 1.0,
+        "gains": {
+          "in1": 0.6,
+          "in2": 0.5,
+          "in3": 0.4,
+          "in4": 0.35
+        }
+      }
+    },
+
+    {
+      "id": "compare_text",
+      "type": "CompareNode",
+      "enabled": true,
+      "ui": { "x": 900, "y": 140 },
+      "params": {
+        "mode": "text_ab",
+        "compute_divergence": true,
+        "compute_attractor_density": true,
+        "compute_refusal": true
+      }
+    },
+
+    {
+      "id": "meters",
+      "type": "MeterBusNode",
+      "enabled": true,
+      "ui": { "x": 1200, "y": 140 },
+      "params": {
+        "emit_every_ticks": 1,
+        "meters": [
+          "coherence",
+          "entropy",
+          "divergence",
+          "refusal",
+          "attractor_density"
+        ]
+      }
+    },
+
+    {
+      "id": "recorder",
+      "type": "RecorderNode",
+      "enabled": true,
+      "ui": { "x": 1530, "y": 140 },
+      "params": {
+        "take_label": "starter_ab_8bends",
+        "auto_write_theory_memo": true,
+        "auto_emit_figure_specs": true
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_prompt_to_baseline",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "baseline_llm",
+      "to_port": "prompt_in"
+    },
+    {
+      "id": "e_prompt_to_bent",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "bent_llm",
+      "to_port": "prompt_in"
+    },
+
+    {
+      "id": "e_clock_to_recorder",
+      "from_node": "clock",
+      "from_port": "trigger_out",
+      "to_node": "recorder",
+      "to_port": "trigger_in"
+    },
+
+    {
+      "id": "e_stratigraphy_to_cv_mix",
+      "from_node": "bend_02_corpus_stratigraphy",
+      "from_port": "cv_out",
+      "to_node": "cv_mix_bends",
+      "to_port": "in1"
+    },
+    {
+      "id": "e_interhead_to_cv_mix",
+      "from_node": "bend_03_inter_head_drift",
+      "from_port": "cv_out",
+      "to_node": "cv_mix_bends",
+      "to_port": "in2"
+    },
+    {
+      "id": "e_dissonance_to_cv_mix",
+      "from_node": "bend_04_governance_dissonance",
+      "from_port": "cv_out",
+      "to_node": "cv_mix_bends",
+      "to_port": "in3"
+    },
+    {
+      "id": "e_justice_to_cv_mix",
+      "from_node": "bend_07_justice_reweighting",
+      "from_port": "cv_out",
+      "to_node": "cv_mix_bends",
+      "to_port": "in4"
+    },
+    {
+      "id": "e_lfo_to_cv_mix",
+      "from_node": "lfo_slow",
+      "from_port": "cv_out",
+      "to_node": "cv_mix_bends",
+      "to_port": "mod_in"
+    },
+
+    {
+      "id": "e_cv_mix_to_bent_llm",
+      "from_node": "cv_mix_bends",
+      "from_port": "cv_out",
+      "to_node": "bent_llm",
+      "to_port": "sampler_cv_in"
+    },
+
+    {
+      "id": "e_baseline_text_to_compare",
+      "from_node": "baseline_llm",
+      "from_port": "text_out",
+      "to_node": "compare_text",
+      "to_port": "a_in"
+    },
+    {
+      "id": "e_bent_text_to_compare",
+      "from_node": "bent_llm",
+      "from_port": "text_out",
+      "to_node": "compare_text",
+      "to_port": "b_in"
+    },
+    {
+      "id": "e_compare_to_meters",
+      "from_node": "compare_text",
+      "from_port": "metrics_out",
+      "to_node": "meters",
+      "to_port": "metrics_in"
+    },
+
+    {
+      "id": "e_meters_to_recorder",
+      "from_node": "meters",
+      "from_port": "metrics_out",
+      "to_node": "recorder",
+      "to_port": "metrics_in"
+    },
+    {
+      "id": "e_baseline_text_to_recorder",
+      "from_node": "baseline_llm",
+      "from_port": "text_out",
+      "to_node": "recorder",
+      "to_port": "text_a_in"
+    },
+    {
+      "id": "e_bent_text_to_recorder",
+      "from_node": "bent_llm",
+      "from_port": "text_out",
+      "to_node": "recorder",
+      "to_port": "text_b_in"
+    },
+
+    {
+      "id": "e_prompt_to_embed_a",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "text_to_embed_a",
+      "to_port": "text_in"
+    },
+    {
+      "id": "e_concept_to_embed_b",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "text_to_embed_b",
+      "to_port": "trigger_in"
+    },
+    {
+      "id": "e_embed_a_to_contam",
+      "from_node": "text_to_embed_a",
+      "from_port": "embedding_out",
+      "to_node": "bend_01_embedding_contamination",
+      "to_port": "embedding_a_in"
+    },
+    {
+      "id": "e_embed_b_to_contam",
+      "from_node": "text_to_embed_b",
+      "from_port": "embedding_out",
+      "to_node": "bend_01_embedding_contamination",
+      "to_port": "embedding_b_in"
+    },
+
+    {
+      "id": "e_contam_to_diffusion_bent",
+      "from_node": "bend_01_embedding_contamination",
+      "from_port": "embedding_out",
+      "to_node": "diffusion_bent",
+      "to_port": "embedding_in"
+    },
+    {
+      "id": "e_prompt_to_diffusion_baseline",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "diffusion_baseline",
+      "to_port": "prompt_in"
+    },
+    {
+      "id": "e_prompt_to_diffusion_bent",
+      "from_node": "prompt_src",
+      "from_port": "text_out",
+      "to_node": "diffusion_bent",
+      "to_port": "prompt_in"
+    }
+  ]
+}
