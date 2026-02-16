@@ -1,0 +1,11 @@
+model_name: sshleifer/tiny-gpt2
+prompt: "The neural manifold is"
+max_new_tokens: 16
+temperatures: [0.8, 1.0]
+top_ps: [0.9, 1.0]
+top_ks: [0, 40]
+baseline_temperature: 1.0
+baseline_top_p: 1.0
+baseline_top_k: 0
+analyze_hidden_layers: [0]
+analyze_attention_layers: [0]

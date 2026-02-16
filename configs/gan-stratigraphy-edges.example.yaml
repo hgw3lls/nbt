@@ -1,0 +1,6 @@
+checkpoint_path: /path/to/stylegan_checkpoint.pt
+latent_dim: 512
+n_samples: 8
+low_truncation: 0.3
+high_truncation: 1.4
+seed: 17
