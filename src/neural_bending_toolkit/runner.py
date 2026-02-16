@@ -8,7 +8,10 @@ from pathlib import Path
 
 import yaml
 
-from neural_bending_toolkit.config import load_and_validate_config
+from neural_bending_toolkit.analysis.bend_classifier import write_bend_classification
+from neural_bending_toolkit.analysis.derived_metrics import write_derived_metrics
+from neural_bending_toolkit.analysis.theory_memo_generator import build_theory_memo
+from neural_bending_toolkit.config import validate_config_dict
 from neural_bending_toolkit.experiment import RunContext
 from neural_bending_toolkit.registry import ExperimentRegistry
 
@@ -29,7 +32,16 @@ def run_experiment(
     registry: ExperimentRegistry,
 ) -> Path:
     experiment_cls = registry.get(experiment_name)
-    config = load_and_validate_config(config_path, experiment_cls.config_model)
+
+    with config_path.open("r", encoding="utf-8") as f:
+        raw_config = yaml.safe_load(f) or {}
+
+    auto_memo = (
+        bool(raw_config.pop("auto_memo", False))
+        if isinstance(raw_config, dict)
+        else False
+    )
+    config = validate_config_dict(raw_config, experiment_cls.config_model)
 
     run_dir = build_run_dir(experiment_name)
     with (run_dir / "config.yaml").open("w", encoding="utf-8") as f:
@@ -46,4 +58,11 @@ def run_experiment(
         experiment.run(context)
     finally:
         context.close()
+
+    if auto_memo:
+        write_derived_metrics(run_dir)
+        write_bend_classification(run_dir)
+        build_theory_memo(run_dir)
+
+    experiment.emit_figure_specs(run_dir)
     return run_dir
