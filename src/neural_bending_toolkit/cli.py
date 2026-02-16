@@ -22,6 +22,8 @@ from neural_bending_toolkit.analysis.theory_memo_generator import (
     build_theory_memo,
     build_theory_memos_for_runs,
 )
+from neural_bending_toolkit.console.runtime import node_specs
+from neural_bending_toolkit.console.schema import validate_patch_graph
 from neural_bending_toolkit.registry import ExperimentRegistry
 from neural_bending_toolkit.runner import run_experiment
 
@@ -35,6 +37,8 @@ analyze_app = typer.Typer(help="Post-run derived metric analysis and classificat
 app.add_typer(analyze_app, name="analyze")
 memo_app = typer.Typer(help="Build theory memos from run outputs.")
 app.add_typer(memo_app, name="memo")
+console_app = typer.Typer(help="Interactive console commands.")
+app.add_typer(console_app, name="console")
 
 
 def _load_registry() -> ExperimentRegistry:
