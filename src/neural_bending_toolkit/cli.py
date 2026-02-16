@@ -247,3 +247,108 @@ def geopolitical_compare(
 
     typer.echo(f"Geopolitical comparison CSV: {csv_path}")
     typer.echo(f"Geopolitical comparison summary: {md_path}")
+
+
+@console_app.command("serve")
+def console_serve(host: str = "127.0.0.1", port: int = 8000) -> None:
+    """Run the console websocket server."""
+    try:
+        import uvicorn
+    except ImportError as err:
+        raise typer.BadParameter(
+            "uvicorn is required for `nbt console serve`. Install with `pip install uvicorn`."
+        ) from err
+    from neural_bending_toolkit.console.server import app as console_server_app
+
+    if console_server_app is None:
+        raise typer.BadParameter(
+            "fastapi is required for `nbt console serve`. Install with `pip install fastapi`."
+        )
+
+    uvicorn.run(console_server_app, host=host, port=port)
+
+
+@console_app.command("validate")
+def console_validate(
+    patch: Annotated[list[Path], typer.Option("--patch", exists=True, dir_okay=False)],
+) -> None:
+    """Validate one or more patch JSON files."""
+    for patch_file in patch:
+        payload = json.loads(patch_file.read_text(encoding="utf-8"))
+        validate_patch_graph(payload, node_specs=node_specs())
+        typer.echo(f"valid patch: {patch_file}")
+
+
+@console_app.command("init")
+def console_init(output: Path = Path("patches/starter_patch.json")) -> None:
+    """Write a starter console patch."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    starter_patch = {
+        "nodes": [
+            {
+                "id": "prompt_1",
+                "type": "PromptSourceNode",
+                "params": {"text": "neural bending console"},
+                "ui": {"x": 80, "y": 120},
+                "enabled": True,
+            },
+            {
+                "id": "gen_1",
+                "type": "DummyTextGenNode",
+                "params": {},
+                "ui": {"x": 340, "y": 120},
+                "enabled": True,
+            },
+            {
+                "id": "metrics_1",
+                "type": "MetricProbeNode",
+                "params": {},
+                "ui": {"x": 600, "y": 120},
+                "enabled": True,
+            },
+        ],
+        "edges": [
+            {
+                "id": "e_prompt_gen",
+                "from_node": "prompt_1",
+                "from_port": "text",
+                "to_node": "gen_1",
+                "to_port": "prompt",
+            },
+            {
+                "id": "e_gen_metrics",
+                "from_node": "gen_1",
+                "from_port": "text",
+                "to_node": "metrics_1",
+                "to_port": "text",
+            },
+        ],
+        "globals": {"tick_rate": 30},
+    }
+    output.write_text(json.dumps(starter_patch, indent=2), encoding="utf-8")
+    typer.echo(f"starter patch written: {output}")
+
+
+@console_app.command("patches")
+def console_patches() -> None:
+    """List available starter patch files under patches/."""
+    patches_dir = Path("patches")
+    if not patches_dir.exists():
+        typer.echo("No patches directory found.")
+        return
+
+    patch_files = sorted(patches_dir.glob("*.json"))
+    if not patch_files:
+        typer.echo("No patch files found.")
+        return
+
+    for patch_file in patch_files:
+        description = "(no description)"
+        try:
+            payload = json.loads(patch_file.read_text(encoding="utf-8"))
+            notes = payload.get("globals", {}).get("notes")
+            if isinstance(notes, str) and notes.strip():
+                description = notes.strip().split(".")[0] + "."
+        except Exception:
+            description = "(unreadable patch metadata)"
+        typer.echo(f"{patch_file}: {description}")

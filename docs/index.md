@@ -13,3 +13,8 @@ Welcome to the documentation stub for the Neural Bending Toolkit.
 - [Dissertation Bend Families](dissertation-bend-families.md)
 - [Run Report & Analysis](run-report-analysis.md)
 - [Geopolitical Bend](geopolitical-bend.md)
+
+- [Console UI](CONSOLE_UI.md)
+- [Console Real Models](CONSOLE_REAL_MODELS.md)
+- [Console Performance Mode](CONSOLE_PERFORMANCE.md)
+- [Patches](PATCHES.md)

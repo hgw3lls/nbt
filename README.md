@@ -89,3 +89,13 @@ Generate analysis reports from existing runs with `nbt report <run_dir>`.
 
 
 Geopolitical suite: `nbt geopolitical describe` and `nbt geopolitical run --config configs/geopolitical.example.yaml`.
+
+
+## Starter patches
+
+Starter modular patches live under `patches/`, including `patches/starter_8_bends_ab.json`.
+
+```bash
+nbt console serve
+# then in console_ui: npm run dev and load patches/starter_8_bends_ab.json
+```

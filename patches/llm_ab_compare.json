@@ -1,0 +1,19 @@
+{
+  "nodes": [
+    {"id": "prompt", "type": "PromptSourceNode", "params": {"text": "Discuss policy futures"}, "ui": {"x": 50, "y": 120}, "enabled": true},
+    {"id": "llm_base", "type": "LLMVoiceNode", "params": {"temperature": 0.6, "top_p": 0.9, "top_k": 40}, "ui": {"x": 280, "y": 60}, "enabled": true},
+    {"id": "gov", "type": "GovernanceDissonanceNode", "params": {"enabled": true, "dry_wet": 0.5}, "ui": {"x": 280, "y": 210}, "enabled": true},
+    {"id": "justice", "type": "JusticeReweightingNode", "params": {"enabled": true, "dry_wet": 0.7}, "ui": {"x": 520, "y": 210}, "enabled": true},
+    {"id": "llm_bent", "type": "LLMVoiceNode", "params": {"temperature": 0.9, "top_p": 0.8, "top_k": 20}, "ui": {"x": 760, "y": 210}, "enabled": true},
+    {"id": "compare", "type": "CompareNode", "params": {}, "ui": {"x": 980, "y": 130}, "enabled": true}
+  ],
+  "edges": [
+    {"id": "e1", "from_node": "prompt", "from_port": "text", "to_node": "llm_base", "to_port": "prompt"},
+    {"id": "e2", "from_node": "prompt", "from_port": "text", "to_node": "gov", "to_port": "text"},
+    {"id": "e3", "from_node": "gov", "from_port": "text", "to_node": "justice", "to_port": "text"},
+    {"id": "e4", "from_node": "justice", "from_port": "text", "to_node": "llm_bent", "to_port": "prompt"},
+    {"id": "e5", "from_node": "llm_base", "from_port": "text", "to_node": "compare", "to_port": "baseline_text"},
+    {"id": "e6", "from_node": "llm_bent", "from_port": "text", "to_node": "compare", "to_port": "bent_text"}
+  ],
+  "globals": {"tick_rate": 30}
+}
