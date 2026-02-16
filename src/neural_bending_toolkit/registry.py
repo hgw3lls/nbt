@@ -38,6 +38,10 @@ class ExperimentRegistry:
                 if member is Experiment:
                     continue
                 if issubclass(member, Experiment):
+                    # Skip intermediate base classes that do not declare a
+                    # discoverable experiment name.
+                    if not hasattr(member, "name"):
+                        continue
                     self.register(member)
 
     def discover(self) -> None:
