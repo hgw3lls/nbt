@@ -225,3 +225,24 @@ caption_template_variables: {limit: drift, threshold: spike}
     )
     spec = load_figure_spec(path)
     assert spec.figure_id == "roundtrip"
+
+
+def test_build_from_run_auto_emits_specs_when_missing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    run = _dummy_run(tmp_path, "run_auto_specs")
+    analysis_dir = run / "analysis"
+    analysis_dir.mkdir(parents=True, exist_ok=True)
+    (analysis_dir / "derived_metrics.json").write_text(
+        json.dumps({"attractor_density_delta": 0.2}), encoding="utf-8"
+    )
+    (analysis_dir / "bend_classification.json").write_text(
+        json.dumps({"bend_tag": "disruptive"}), encoding="utf-8"
+    )
+
+    outputs = build_figures_from_run(run, repo_root=tmp_path)
+    assert len(outputs) >= 1
+    specs_dir = run / "figure_specs"
+    assert specs_dir.exists()
+    assert list(specs_dir.glob("*.yaml"))

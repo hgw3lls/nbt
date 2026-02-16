@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, ClassVar
@@ -9,6 +10,7 @@ from typing import Any, ClassVar
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from neural_bending_toolkit.figures.specs import FigureSpec, save_figure_spec
 from neural_bending_toolkit.instrumentation import (
     ArtifactSaver,
     MetricsLogger,
@@ -142,6 +144,100 @@ class Experiment(ABC):
         if not artifacts_dir.exists():
             return []
         return sorted(path for path in artifacts_dir.glob("**/*") if path.is_file())
+
+    def recommended_figure_specs(self, run_dir: Path) -> list[dict[str, Any]]:
+        """Return recommended figure specs for the run (override in subclasses)."""
+        run_dir = Path(run_dir)
+        analysis_dir = run_dir / "analysis"
+        derived = {}
+        classification = {}
+        derived_path = analysis_dir / "derived_metrics.json"
+        classification_path = analysis_dir / "bend_classification.json"
+        if derived_path.exists():
+            derived = json.loads(derived_path.read_text(encoding="utf-8"))
+        if classification_path.exists():
+            classification = json.loads(
+                classification_path.read_text(encoding="utf-8")
+            )
+
+        specs: list[dict[str, Any]] = [
+            {
+                "figure_id": f"{run_dir.name}_divergence",
+                "title": "Divergence Overview",
+                "input_run_dirs": [str(run_dir)],
+                "plot_type": "divergence_bar_chart",
+                "inputs": {},
+                "output_format": {"png": True, "pdf": True},
+                "caption_template_variables": {
+                    "limit": "distribution drift",
+                    "threshold": "divergence increase",
+                },
+            }
+        ]
+
+        bend_tag = str(classification.get("bend_tag", ""))
+        if bend_tag == "disruptive":
+            specs.append(
+                {
+                    "figure_id": f"{run_dir.name}_attention_entropy",
+                    "title": "Attention Entropy Timeseries",
+                    "input_run_dirs": [str(run_dir)],
+                    "plot_type": "attention_entropy_timeseries",
+                    "inputs": {},
+                    "output_format": {"png": True, "pdf": True},
+                    "caption_template_variables": {
+                        "limit": "entropy escalation",
+                        "threshold": "abrupt coherence break",
+                    },
+                }
+            )
+
+        if isinstance(derived.get("attractor_density_delta"), (int, float)):
+            specs.append(
+                {
+                    "figure_id": f"{run_dir.name}_attractor_density",
+                    "title": "Attractor Density Comparison",
+                    "input_run_dirs": [str(run_dir)],
+                    "plot_type": "attractor_density_comparison",
+                    "inputs": {},
+                    "output_format": {"png": True, "pdf": True},
+                    "caption_template_variables": {
+                        "limit": "token attractor saturation",
+                        "threshold": "density phase shift",
+                    },
+                }
+            )
+
+        if list((run_dir / "artifacts").glob("**/*.png")):
+            specs.append(
+                {
+                    "figure_id": f"{run_dir.name}_artifact_montage",
+                    "title": "Artifact Montage",
+                    "input_run_dirs": [str(run_dir)],
+                    "plot_type": "montage_grid",
+                    "inputs": {},
+                    "output_format": {"png": True, "pdf": True},
+                    "caption_template_variables": {
+                        "limit": "visible sample drift",
+                        "threshold": "qualitative regime change",
+                    },
+                }
+            )
+        return specs
+
+    def emit_figure_specs(self, run_dir: Path) -> list[Path]:
+        """Write recommended figure specs under run_dir/figure_specs."""
+        run_dir = Path(run_dir)
+        specs_dir = run_dir / "figure_specs"
+        specs_dir.mkdir(parents=True, exist_ok=True)
+
+        emitted: list[Path] = []
+        for payload in self.recommended_figure_specs(run_dir):
+            spec = FigureSpec.model_validate(payload)
+            out_path = specs_dir / f"{spec.figure_id}.yaml"
+            save_figure_spec(spec, out_path)
+            emitted.append(out_path)
+        return emitted
 
     @abstractmethod
     def run(self, context: RunContext) -> None:
