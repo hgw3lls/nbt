@@ -31,7 +31,7 @@ Use this mode when working on source code and tests.
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -e ".[dev]"
+pip install -e .[dev]
 ```
 
 Run quality checks:
@@ -47,11 +47,11 @@ pytest
 Install only what you need:
 
 ```bash
-pip install -e ".[llm]"
-pip install -e ".[diffusion]"
-pip install -e ".[gan]"
-pip install -e ".[audio]"
-pip install -e ".[analysis]"
+pip install -e .[llm]
+pip install -e .[diffusion]
+pip install -e .[gan]
+pip install -e .[audio]
+pip install -e .[analysis]
 ```
 
 ## CI / clean-environment install check
@@ -69,5 +69,4 @@ nbt --help
 
 - If `nbt` is not found, make sure your virtual environment is activated.
 - If dependency resolution fails, upgrade pip first (`python -m pip install --upgrade pip`).
-- If using `zsh`, quote extras to avoid glob expansion errors (for example `pip install -e ".[dev]"`).
 - If optional adapters fail to import, install the matching extra (for example `.[llm]` or `.[diffusion]`).
