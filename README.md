@@ -61,7 +61,7 @@ black --check .
 pytest
 ```
 
-See [`docs/`](docs/) for documentation stubs and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+See [`Install.md`](Install.md) for installation workflows, [`docs/`](docs/) for documentation stubs, and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
 
 ## LLM adapter
