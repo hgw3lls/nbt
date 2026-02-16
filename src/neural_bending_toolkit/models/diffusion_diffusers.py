@@ -128,7 +128,11 @@ class HookedCrossAttentionProcessor:
                 "attention_probs": attention_probs,
             }
             modified = self.hook(payload)
-            if modified:
+            if modified is not None:
+                if not isinstance(modified, dict):
+                    raise TypeError(
+                        "cross_attention_hook must return a dict[str, Any] or None",
+                    )
                 query = modified.get("query", query)
                 key = modified.get("key", key)
                 attention_probs = modified.get("attention_probs", attention_probs)
