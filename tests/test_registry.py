@@ -21,3 +21,4 @@ def test_registry_discovers_builtin_experiments() -> None:
     assert "family-justice-reweighting" in experiments
     assert "family-justice-attractors" in experiments
     assert "geopolitical-bend" in experiments
+    assert "bend-family" not in experiments
