@@ -1,0 +1,8 @@
+prompt: "A minimalist ambient synth line"
+duration_s: 3.0
+baseline_conditioning_scale: 1.0
+drift_conditioning_scale: 1.4
+baseline_attention_scale: 1.0
+drift_attention_scale: 1.6
+model_name: facebook/musicgen-small
+seed: 13

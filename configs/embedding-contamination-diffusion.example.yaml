@@ -1,0 +1,7 @@
+model_id: hf-internal-testing/tiny-stable-diffusion-pipe
+base_prompt: "a clean laboratory bench"
+contaminant_prompt: "a chaotic graffiti wall"
+contamination_alpha: 0.25
+num_inference_steps: 10
+guidance_scale: 7.0
+seed: 7
