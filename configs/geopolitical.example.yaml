@@ -1,0 +1,18 @@
+model_identifiers:
+  - meta/llama-3.1-70b-instruct
+  - mistral/mixtral-8x7b-instruct
+llm_model_identifier: sshleifer/tiny-gpt2
+diffusion_model_identifier: hf-internal-testing/tiny-stable-diffusion-pipe
+governance_concepts:
+  - sovereignty
+  - sanctions
+  - humanitarian intervention
+contradictory_prompt_pairs:
+  - ["Sanctions are necessary for peace.", "Sanctions harm civilians and should end."]
+  - ["Border control preserves national security.", "Open mobility best preserves human rights."]
+justice_attractor_token_sets:
+  - ["equity", "rights", "dignity"]
+  - ["repair", "solidarity", "pluralism"]
+log_level: info
+save_intermediate_artifacts: true
+random_seed: 17

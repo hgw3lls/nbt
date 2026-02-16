@@ -1,0 +1,20 @@
+[
+  {
+    "model_identifier": "openai/gpt-4.1",
+    "region": "global",
+    "alignment_regime": "policy-moderated",
+    "notes": "General-purpose model with multi-region safety alignment."
+  },
+  {
+    "model_identifier": "meta/llama-3.1-70b-instruct",
+    "region": "global",
+    "alignment_regime": "open-weights-instruction",
+    "notes": "Open-weight instruct model; alignment characteristics vary by deployment."
+  },
+  {
+    "model_identifier": "mistral/mixtral-8x7b-instruct",
+    "region": "EU",
+    "alignment_regime": "open-weights-instruction",
+    "notes": "Mixture-of-experts instruction model."
+  }
+]
