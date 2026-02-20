@@ -110,6 +110,33 @@ Key artifacts to inspect:
 Generate analysis reports from existing runs with `nbt report <run_dir>`.
 
 
+### Flagship: Norm Drift Collapse/Recovery
+
+Run with:
+
+```bash
+nbt run norm-drift-collapse-recovery-diffusion -c configs/norm-drift-collapse-recovery-diffusion.example.yaml
+```
+
+**Limit targeted**
+
+- Mid-denoising normalization drift can trigger representational collapse in UNet pathways and reduce downstream output coherence.
+
+**Bend v2 plan (Site · Actuator · Schedule · Trace)**
+
+- **Site**: `diffusion.norm` layers selected via `norm_layer_regex`
+- **Actuator**: mid-window `norm_gain_drift` + `norm_stat_clamp` collapse, then late-window counter `norm_gain_drift` recovery
+- **Schedule**: explicit collapse and recovery timestep windows
+- **Trace**: `norm_output_var` captured per step and aggregated into collapse/recovery/stability metrics
+
+**Artifacts to inspect**
+
+- `conditions/{baseline,norm_collapse,norm_recovery}/...`
+- `comparisons/norm_metrics_comparison.json`
+- `comparisons/norm_variance_over_steps.png`
+- `summary.json` (collapse/recovery/stability + norm metastability tags)
+
+
 Geopolitical suite: `nbt geopolitical describe` and `nbt geopolitical run --config configs/geopolitical.example.yaml`.
 
 
