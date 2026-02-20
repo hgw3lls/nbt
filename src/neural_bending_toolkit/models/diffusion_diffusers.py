@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 from pathlib import Path
+import re
 from typing import Any
 
 import numpy as np
@@ -52,6 +53,19 @@ class DiffusionGenerationResult:
 EmbeddingHook = Callable[[Any, dict[str, Any]], Any]
 CrossAttentionHook = Callable[[dict[str, Any]], dict[str, Any] | None]
 NormHook = Callable[[Any, HookContext], Any]
+
+
+@dataclass(slots=True)
+class ResidualHookContext:
+    """Context passed to residual stream hook callbacks."""
+
+    layer_name: str
+    step: int
+    cache: dict[str, dict[str, Any]]
+    metadata: dict[str, Any]
+
+
+ResidualHook = Callable[[Any, ResidualHookContext], Any]
 
 
 class _NormHookManager:
@@ -120,6 +134,89 @@ class _NormHookManager:
     def _make_post_hook(self, layer_name: str) -> Callable[..., Any]:
         def _post_hook(_module: Any, _args: tuple[Any, ...], output: Any) -> Any:
             return self._invoke_hook(output, layer_name, kind="post")
+
+        return _post_hook
+
+
+class _ResidualHookManager:
+    """Lifecycle management for residual stream forward hooks."""
+
+    def __init__(
+        self,
+        *,
+        hook: ResidualHook,
+        get_step: Callable[[], int],
+        cache: dict[str, dict[str, Any]],
+        max_layers_cached: int | None,
+        store_fp16_on_cuda: bool,
+        fp16_dtype: Any,
+    ) -> None:
+        self._hook = hook
+        self._get_step = get_step
+        self._cache = cache
+        self._max_layers_cached = max_layers_cached
+        self._store_fp16_on_cuda = store_fp16_on_cuda
+        self._fp16_dtype = fp16_dtype
+        self._handles: list[Any] = []
+        self._enabled = True
+
+    def register_module(self, layer_name: str, module: Any) -> None:
+        handle = register_forward_hook(module, self._make_post_hook(layer_name))
+        self._handles.append(handle)
+
+    def remove_all(self) -> None:
+        while self._handles:
+            handle = self._handles.pop()
+            handle.remove()
+
+    def _disable_with_warning(self, exc: Exception, layer_name: str) -> None:
+        if self._enabled:
+            logger.warning(
+                "Disabling residual hooks after error in %s: %s",
+                layer_name,
+                exc,
+            )
+            self._enabled = False
+            self.remove_all()
+
+    def _bounded_cache(self, layer_name: str, value: Any) -> None:
+        echo_cache = self._cache["residual_echo"]
+        if layer_name not in echo_cache:
+            if self._max_layers_cached is not None:
+                if self._max_layers_cached <= 0:
+                    return
+                if len(echo_cache) >= self._max_layers_cached:
+                    return
+
+        cached = value.detach()
+        if (
+            self._store_fp16_on_cuda
+            and getattr(cached, "is_cuda", False)
+            and getattr(cached, "dtype", None) is not None
+            and cached.dtype != self._fp16_dtype
+        ):
+            cached = cached.to(dtype=self._fp16_dtype)
+        echo_cache[layer_name] = cached
+
+    def _make_post_hook(self, layer_name: str) -> Callable[..., Any]:
+        def _post_hook(_module: Any, _args: tuple[Any, ...], output: Any) -> Any:
+            if not self._enabled:
+                return output
+            ctx = ResidualHookContext(
+                layer_name=layer_name,
+                step=self._get_step(),
+                cache=self._cache,
+                metadata={"hook_kind": "post"},
+            )
+            try:
+                updated = self._hook(output, ctx)
+            except Exception as exc:  # pragma: no cover - behavior validated elsewhere
+                self._disable_with_warning(exc, layer_name)
+                return output
+
+            final_output = output if updated is None else updated
+            self._bounded_cache(layer_name, final_output)
+            return final_output
 
         return _post_hook
 
@@ -284,6 +381,14 @@ class DiffusersStableDiffusionAdapter:
                 modules.append((name, module))
         return modules
 
+    def _iter_residual_modules(self, layer_pattern: str) -> list[tuple[str, Any]]:
+        pattern = re.compile(layer_pattern)
+        return [
+            (name, module)
+            for name, module in self._pipe.unet.named_modules()
+            if name and pattern.search(name)
+        ]
+
     def _encode_prompt(self, prompt: str) -> Any:
         torch = self._torch
 
@@ -308,6 +413,10 @@ class DiffusersStableDiffusionAdapter:
         embedding_hook: EmbeddingHook | None = None,
         cross_attention_hook: CrossAttentionHook | None = None,
         norm_hook: NormHook | None = None,
+        residual_hook: ResidualHook | None = None,
+        residual_layer_pattern: str = r"(?:resnets|transformer_blocks)",
+        max_layers_cached: int | None = None,
+        residual_cache_fp16_on_cuda: bool = True,
         generator_seed: int | None = None,
     ) -> DiffusionGenerationResult:
         torch = self._torch
@@ -329,6 +438,7 @@ class DiffusersStableDiffusionAdapter:
         self._pipe.unet.set_attn_processor(processor_map)
 
         self.current_step = 0
+        residual_cache: dict[str, dict[str, Any]] = {"residual_echo": {}}
         norm_manager: _NormHookManager | None = None
         if norm_hook is not None:
             norm_manager = _NormHookManager(
@@ -337,6 +447,19 @@ class DiffusersStableDiffusionAdapter:
             )
             for layer_name, module in self._iter_normalization_modules():
                 norm_manager.register_module(layer_name, module)
+
+        residual_manager: _ResidualHookManager | None = None
+        if residual_hook is not None:
+            residual_manager = _ResidualHookManager(
+                hook=residual_hook,
+                get_step=lambda: self.current_step,
+                cache=residual_cache,
+                max_layers_cached=max_layers_cached,
+                store_fp16_on_cuda=residual_cache_fp16_on_cuda,
+                fp16_dtype=torch.float16,
+            )
+            for layer_name, module in self._iter_residual_modules(residual_layer_pattern):
+                residual_manager.register_module(layer_name, module)
 
         generator = None
         if generator_seed is not None:
@@ -365,6 +488,8 @@ class DiffusersStableDiffusionAdapter:
         finally:
             if norm_manager is not None:
                 norm_manager.remove_all()
+            if residual_manager is not None:
+                residual_manager.remove_all()
 
         return DiffusionGenerationResult(
             images=result.images,
