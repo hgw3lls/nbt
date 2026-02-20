@@ -12,11 +12,7 @@ from typing import Any
 import numpy as np
 
 from neural_bending_toolkit.models.torch_device import normalize_torch_device
-from neural_bending_toolkit.models.hooks import (
-    HookContext,
-    register_forward_hook,
-    register_forward_pre_hook,
-)
+from neural_bending_toolkit.models.hooks import register_forward_hook, register_forward_pre_hook
 
 logger = logging.getLogger(__name__)
 
@@ -52,20 +48,8 @@ class DiffusionGenerationResult:
 
 EmbeddingHook = Callable[[Any, dict[str, Any]], Any]
 CrossAttentionHook = Callable[[dict[str, Any]], dict[str, Any] | None]
-NormHook = Callable[[Any, HookContext], Any]
+NormHook = Callable[[dict[str, Any]], Any]
 
-
-@dataclass(slots=True)
-class ResidualHookContext:
-    """Context passed to residual stream hook callbacks."""
-
-    layer_name: str
-    step: int
-    cache: dict[str, dict[str, Any]]
-    metadata: dict[str, Any]
-
-
-ResidualHook = Callable[[Any, ResidualHookContext], Any]
 
 
 class _NormHookManager:
@@ -78,67 +62,43 @@ class _NormHookManager:
         self._enabled = True
 
     def register_module(self, layer_name: str, module: Any) -> None:
-        pre_handle = register_forward_pre_hook(
-            module,
-            self._make_pre_hook(layer_name),
-        )
-        self._handles.append(pre_handle)
-        post_handle = register_forward_hook(
-            module,
-            self._make_post_hook(layer_name),
-        )
-        self._handles.append(post_handle)
+        handle = register_forward_hook(module, self._make_post_hook(layer_name))
+        self._handles.append(handle)
 
     def remove_all(self) -> None:
         while self._handles:
-            handle = self._handles.pop()
-            handle.remove()
+            self._handles.pop().remove()
 
     def _disable_with_warning(self, exc: Exception, layer_name: str) -> None:
         if self._enabled:
-            logger.warning(
-                "Disabling normalization hooks after error in %s: %s",
-                layer_name,
-                exc,
-            )
+            logger.warning("Disabling normalization hooks after error in %s: %s", layer_name, exc)
             self._enabled = False
             self.remove_all()
 
-    def _invoke_hook(self, x: Any, layer_name: str, kind: str) -> Any:
-        if not self._enabled:
-            return x
-        try:
-            ctx = HookContext(
-                layer_name=layer_name,
-                step=self._get_step(),
-                metadata={"hook_kind": kind},
-            )
-            updated = self._hook(x, ctx)
-        except Exception as exc:  # pragma: no cover - validated in behavior tests
-            self._disable_with_warning(exc, layer_name)
-            return x
-        return x if updated is None else updated
-
-    def _make_pre_hook(self, layer_name: str) -> Callable[..., Any]:
-        def _pre_hook(_module: Any, args: tuple[Any, ...]) -> tuple[Any, ...]:
-            if not args:
-                return args
-            x = args[0]
-            updated = self._invoke_hook(x, layer_name, kind="pre")
-            if updated is x:
-                return args
-            return (updated, *args[1:])
-
-        return _pre_hook
-
     def _make_post_hook(self, layer_name: str) -> Callable[..., Any]:
-        def _post_hook(_module: Any, _args: tuple[Any, ...], output: Any) -> Any:
-            return self._invoke_hook(output, layer_name, kind="post")
+        def _post_hook(module: Any, args: tuple[Any, ...], output: Any) -> Any:
+            if not self._enabled:
+                return output
+            payload = {"layer": layer_name, "step": self._get_step(), "tensor": output, "module": module, "metadata": {"hook_kind": "post", "input_count": len(args)}}
+            try:
+                updated = self._hook(payload)
+            except TypeError:
+                try:
+                    from types import SimpleNamespace
+                    updated = self._hook(output, SimpleNamespace(layer_name=layer_name, step=payload["step"], metadata=payload["metadata"], cache=payload.get("cache", {})))  # type: ignore[misc]
+                except Exception as exc:
+                    self._disable_with_warning(exc, layer_name)
+                    return output
+            except Exception as exc:
+                self._disable_with_warning(exc, layer_name)
+                return output
+            return output if updated is None else updated
 
         return _post_hook
 
 
 class _ResidualHookManager:
+
     """Lifecycle management for residual stream forward hooks."""
 
     def __init__(
@@ -199,17 +159,28 @@ class _ResidualHookManager:
         echo_cache[layer_name] = cached
 
     def _make_post_hook(self, layer_name: str) -> Callable[..., Any]:
-        def _post_hook(_module: Any, _args: tuple[Any, ...], output: Any) -> Any:
+        def _post_hook(module: Any, args: tuple[Any, ...], output: Any) -> Any:
             if not self._enabled:
                 return output
-            ctx = ResidualHookContext(
-                layer_name=layer_name,
-                step=self._get_step(),
-                cache=self._cache,
-                metadata={"hook_kind": "post"},
-            )
+            prev = self._cache["residual_echo"].get(layer_name)
+            payload = {
+                "layer": layer_name,
+                "step": self._get_step(),
+                "tensor": output,
+                "prev": prev,
+                "cache": self._cache,
+                "module": module,
+                "metadata": {"hook_kind": "post", "input_count": len(args)},
+            }
             try:
-                updated = self._hook(output, ctx)
+                updated = self._hook(payload)
+            except TypeError:
+                try:
+                    from types import SimpleNamespace
+                    updated = self._hook(output, SimpleNamespace(layer_name=layer_name, step=payload["step"], metadata=payload["metadata"], cache=payload.get("cache", {})))  # type: ignore[misc]
+                except Exception as exc:
+                    self._disable_with_warning(exc, layer_name)
+                    return output
             except Exception as exc:  # pragma: no cover - behavior validated elsewhere
                 self._disable_with_warning(exc, layer_name)
                 return output
@@ -415,6 +386,7 @@ class DiffusersStableDiffusionAdapter:
         norm_hook: NormHook | None = None,
         residual_hook: ResidualHook | None = None,
         residual_layer_pattern: str = r"(?:resnets|transformer_blocks)",
+        max_cache_layers: int = 64,
         max_layers_cached: int | None = None,
         residual_cache_fp16_on_cuda: bool = True,
         generator_seed: int | None = None,
@@ -454,7 +426,7 @@ class DiffusersStableDiffusionAdapter:
                 hook=residual_hook,
                 get_step=lambda: self.current_step,
                 cache=residual_cache,
-                max_layers_cached=max_layers_cached,
+                max_layers_cached=max_layers_cached if max_layers_cached is not None else max_cache_layers,
                 store_fp16_on_cuda=residual_cache_fp16_on_cuda,
                 fp16_dtype=torch.float16,
             )

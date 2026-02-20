@@ -1,33 +1,47 @@
-# Residual echo-chamber flagship diffusion experiment
-# Run with:
-#   nbt run residual-echo-chamber-diffusion --config configs/residual-echo-chamber-diffusion.example.yaml
-
-model_id: "hf-internal-testing/tiny-stable-diffusion-pipe"
+model_id: hf-internal-testing/tiny-stable-diffusion-pipe
 prompt:
   - "ornate wallpaper patterns repeating into the distance"
-  - "a kaleidoscopic corridor of mirrored motifs"
-negative_prompt: "blurry, low quality, text artifacts"
-
 seed: 17
 num_inference_steps: 30
 guidance_scale: 7.5
 samples_per_condition: 2
-
-# Target a subset of UNet residual-style blocks.
-residual_site_layer_regex: "down_blocks\\.[0-2]\\..*(?:resnets|transformer_blocks)"
 residual_layer_pattern: "(?:resnets|transformer_blocks)"
-max_layers_cached: 64
+max_cache_layers: 64
 
-# Echo alpha ramp 0 -> 0.25 from steps 10 -> 25.
-echo_timestep_start: 10
-echo_timestep_end: 25
-echo_alpha_max: 0.25
+echo:
+  - name: residual-echo-ramp
+    site:
+      kind: diffusion.residual
+      layer_regex: "down_blocks\\.[0-2]\\..*(?:resnets|transformer_blocks)"
+      timestep_start: 8
+      timestep_end: 24
+    actuator:
+      type: residual_echo
+      params:
+        alpha: 0.35
+    schedule:
+      mode: ramp
+      strength: 1.0
+      strength_start: 0.2
+      strength_end: 1.0
+    trace:
+      metrics: [activation_norm, activation_delta_norm]
+      sample_every: 1
 
-# Breaker from steps 26 -> 30 (choose clamp or leak).
-breaker_timestep_start: 26
-breaker_timestep_end: 30
-breaker_mode: "residual_clamp"
-breaker_clamp_max_norm: 18.0
-# breaker_mode: "residual_leak"
-# breaker_leak: 0.2
-# breaker_noise_scale: 0.0
+counter:
+  - name: residual-breaker-clamp
+    site:
+      kind: diffusion.residual
+      layer_regex: "up_blocks\\.[0-2]\\..*(?:resnets|transformer_blocks)"
+      timestep_start: 24
+      timestep_end: 29
+    actuator:
+      type: residual_clamp
+      params:
+        max_norm: 16.0
+    schedule:
+      mode: window
+      strength: 1.0
+    trace:
+      metrics: [activation_delta_norm]
+      sample_every: 1
