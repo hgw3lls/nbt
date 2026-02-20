@@ -1,0 +1,68 @@
+# configs/governance-shock-recovery-diffusion.first.yaml
+model_id: "hf-internal-testing/tiny-stable-diffusion-pipe"
+prompt:
+  - "a courtroom sketch of a hearing, graphite and ink"
+negative_prompt: null
+seed: 7
+num_inference_steps: 30
+guidance_scale: 7.5
+samples_per_condition: 4
+
+shock:
+  - name: "shock_gate_minority_heads"
+    site:
+      kind: "diffusion.cross_attention"
+      layer_regex: ".*attn2.*"
+      head_indices: [0, 3, 7]
+      timestep_start: 10
+      timestep_end: 16
+    actuator:
+      type: "attention_head_gate"
+      params:
+        scale: 0.15
+        num_heads: 8
+    schedule:
+      mode: "window"
+      strength: 1.0
+    trace:
+      metrics: ["attention_entropy"]
+      sample_every: 1
+
+  - name: "shock_sharpen_attention"
+    site:
+      kind: "diffusion.cross_attention"
+      layer_regex: ".*attn2.*"
+      head_indices: [0, 3, 7]
+      timestep_start: 10
+      timestep_end: 16
+    actuator:
+      type: "attention_probs_temperature"
+      params:
+        temperature: 0.65
+        num_heads: 8
+    schedule:
+      mode: "window"
+      strength: 1.0
+    trace:
+      metrics: ["attention_entropy"]
+      sample_every: 1
+
+counter:
+  - name: "recovery_soften_attention"
+    site:
+      kind: "diffusion.cross_attention"
+      layer_regex: ".*attn2.*"
+      head_indices: [0, 3, 7]
+      timestep_start: 20
+      timestep_end: 28
+    actuator:
+      type: "attention_probs_temperature"
+      params:
+        temperature: 1.25
+        num_heads: 8
+    schedule:
+      mode: "window"
+      strength: 0.8
+    trace:
+      metrics: ["attention_entropy"]
+      sample_every: 1

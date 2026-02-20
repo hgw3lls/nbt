@@ -1,0 +1,61 @@
+# configs/norm-drift-collapse-recovery-diffusion.first.yaml
+model_id: "hf-internal-testing/tiny-stable-diffusion-pipe"
+prompt:
+  - "a public notice posted on a wall, torn paper, photocopy texture"
+seed: 11
+num_inference_steps: 30
+guidance_scale: 7.5
+samples_per_condition: 4
+
+collapse:
+  - name: "norm_gain_overdrive_midwindow"
+    site:
+      kind: "diffusion.norm"
+      layer_regex: ".*(group_norm|GroupNorm|norm).*"
+      timestep_start: 9
+      timestep_end: 15
+    actuator:
+      type: "norm_gain_drift"
+      params:
+        scale: 1.0
+    schedule:
+      mode: "window"
+      strength: 0.45
+    trace:
+      metrics: ["norm_output_mean", "norm_output_var"]
+      sample_every: 1
+
+  - name: "norm_noise_midwindow"
+    site:
+      kind: "diffusion.norm"
+      layer_regex: ".*(group_norm|GroupNorm|norm).*"
+      timestep_start: 9
+      timestep_end: 15
+    actuator:
+      type: "activation_noise"
+      params:
+        sigma: 0.015
+    schedule:
+      mode: "window"
+      strength: 1.0
+    trace:
+      metrics: ["norm_output_var"]
+      sample_every: 1
+
+counter:
+  - name: "norm_bias_restore_latewindow"
+    site:
+      kind: "diffusion.norm"
+      layer_regex: ".*(group_norm|GroupNorm|norm).*"
+      timestep_start: 20
+      timestep_end: 28
+    actuator:
+      type: "norm_bias_shift"
+      params:
+        bias: 1.0
+    schedule:
+      mode: "window"
+      strength: -0.12
+    trace:
+      metrics: ["norm_output_mean", "norm_output_var"]
+      sample_every: 1

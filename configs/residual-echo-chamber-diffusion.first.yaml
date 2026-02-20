@@ -1,0 +1,46 @@
+# configs/residual-echo-chamber-diffusion.first.yaml
+model_id: "hf-internal-testing/tiny-stable-diffusion-pipe"
+prompt:
+  - "a looping hallway, subtle repetition, liminal interior"
+seed: 19
+num_inference_steps: 30
+guidance_scale: 7.5
+samples_per_condition: 4
+
+echo:
+  - name: "residual_echo_ramp"
+    site:
+      kind: "diffusion.residual"
+      layer_regex: ".*(resnets|transformer_blocks).*"
+      timestep_start: 10
+      timestep_end: 25
+    actuator:
+      type: "residual_echo"
+      params:
+        alpha: 1.0
+    schedule:
+      mode: "ramp"
+      strength: 0.25
+      strength_start: 0.0
+      strength_end: 0.25
+    trace:
+      metrics: ["activation_norm", "activation_delta_norm"]
+      sample_every: 1
+
+counter:
+  - name: "residual_breaker_clamp"
+    site:
+      kind: "diffusion.residual"
+      layer_regex: ".*(resnets|transformer_blocks).*"
+      timestep_start: 26
+      timestep_end: 29
+    actuator:
+      type: "residual_clamp"
+      params:
+        max_norm: 5.0
+    schedule:
+      mode: "window"
+      strength: 1.0
+    trace:
+      metrics: ["activation_delta_norm"]
+      sample_every: 1
