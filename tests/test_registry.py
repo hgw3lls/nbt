@@ -1,3 +1,13 @@
+import sys
+import types
+
+if "matplotlib" not in sys.modules:
+    matplotlib = types.ModuleType("matplotlib")
+    pyplot = types.ModuleType("matplotlib.pyplot")
+    matplotlib.pyplot = pyplot
+    sys.modules["matplotlib"] = matplotlib
+    sys.modules["matplotlib.pyplot"] = pyplot
+
 from neural_bending_toolkit.registry import ExperimentRegistry
 
 
@@ -21,4 +31,5 @@ def test_registry_discovers_builtin_experiments() -> None:
     assert "family-justice-reweighting" in experiments
     assert "family-justice-attractors" in experiments
     assert "geopolitical-bend" in experiments
+    assert "governance-shock-recovery-diffusion" in experiments
     assert "bend-family" not in experiments
