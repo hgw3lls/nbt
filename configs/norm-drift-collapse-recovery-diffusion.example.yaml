@@ -1,23 +1,45 @@
-# Norm Drift Collapse/Recovery Diffusion (Bend v2 norm hooks)
 model_id: hf-internal-testing/tiny-stable-diffusion-pipe
 prompt:
   - "a cinematic city skyline at dusk"
-negative_prompt: "blurry, low quality"
 seed: 11
-num_inference_steps: 24
+num_inference_steps: 30
 guidance_scale: 7.5
-samples_per_condition: 3
+samples_per_condition: 2
 
-# Layer targeting for normalization hooks
-norm_layer_regex: "(norm|ln|layernorm)"
+collapse:
+  - name: norm-collapse-gain
+    site:
+      kind: diffusion.norm
+      layer_regex: "down_blocks\\.[0-2]\\..*(?:norm|ln|layernorm)"
+      timestep_start: 8
+      timestep_end: 18
+    actuator:
+      type: norm_gain_drift
+      params:
+        scale: 0.9
+    schedule:
+      mode: ramp
+      strength: 1.0
+      strength_start: 0.2
+      strength_end: 1.0
+    trace:
+      metrics: [norm_output_mean, norm_output_var]
+      sample_every: 1
 
-# Mid-window collapse intervention
-collapse_timestep_start: 8
-collapse_timestep_end: 14
-collapse_gain_strength: 1.5
-collapse_clamp_strength: 1.0
-
-# Late-window recovery intervention
-recovery_timestep_start: 16
-recovery_timestep_end: 22
-recovery_gain_strength: -0.35
+counter:
+  - name: norm-recovery-bias
+    site:
+      kind: diffusion.norm
+      layer_regex: "up_blocks\\.[0-2]\\..*(?:norm|ln|layernorm)"
+      timestep_start: 19
+      timestep_end: 29
+    actuator:
+      type: norm_bias_shift
+      params:
+        bias: -0.2
+    schedule:
+      mode: window
+      strength: 0.7
+    trace:
+      metrics: [norm_output_var]
+      sample_every: 1

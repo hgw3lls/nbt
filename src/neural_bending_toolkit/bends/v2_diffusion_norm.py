@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import math
 import re
 from typing import Any, Protocol
 
 from neural_bending_toolkit.bends.v2 import BendPlan, BendSpec, bend_localizability_label
-from neural_bending_toolkit.models.hooks import HookContext
 
 
 class _MetricTracer(Protocol):
@@ -45,129 +43,24 @@ def _step_matches(bend: BendSpec, step: int) -> bool:
 
 def _schedule_strength(bend: BendSpec, step: int) -> float:
     schedule = bend.schedule
-    base = schedule.strength
     if schedule.mode in {"constant", "window"}:
-        return base
-
+        return schedule.strength
     if schedule.mode == "ramp":
         start = bend.site.timestep_start or 0
-        if bend.site.timestep_end is not None:
-            span = max(1, bend.site.timestep_end - start)
-        else:
-            span = max(1, int(bend.actuator.params.get("ramp_steps", 100)))
+        span = max(1, (bend.site.timestep_end or (start + 100)) - start)
         t = min(max((step - start) / span, 0.0), 1.0)
-        start_value = (
-            schedule.strength_start if schedule.strength_start is not None else 0.0
-        )
-        end_value = schedule.strength_end if schedule.strength_end is not None else base
+        start_value = schedule.strength_start if schedule.strength_start is not None else 0.0
+        end_value = schedule.strength_end if schedule.strength_end is not None else schedule.strength
         return start_value + (end_value - start_value) * t
-
     if schedule.mode == "pulse":
         if schedule.period is None or schedule.duty is None:
             return 0.0
-        position = step % schedule.period
-        active = position < schedule.period * schedule.duty
-        return base if active else 0.0
-
+        return schedule.strength if (step % schedule.period) < schedule.period * schedule.duty else 0.0
     return 0.0
 
 
-def _channel_mask_like(x: Any, mask_values: list[float] | None) -> Any:
-    if not mask_values:
-        return x.new_ones(x.shape)
-
-    channel_dim = 1 if x.ndim >= 2 else 0
-    channels = x.shape[channel_dim]
-    if channels <= 0:
-        return x.new_ones(x.shape)
-
-    values = list(mask_values)
-    if len(values) < channels:
-        values.extend([1.0] * (channels - len(values)))
-    if len(values) > channels:
-        values = values[:channels]
-
-    mask = x.new_tensor(values)
-    view_shape = [1] * x.ndim
-    view_shape[channel_dim] = channels
-    return mask.view(*view_shape)
-
-
-def _apply_norm_stat_clamp(x: Any, strength: float, params: dict[str, Any]) -> Any:
-    eps = float(params.get("eps", 1e-6))
-    min_var = params.get("min_var")
-    max_var = params.get("max_var")
-
-    if x.ndim <= 1:
-        return x
-
-    dims = tuple(range(1, x.ndim))
-    mean = x.mean(dim=dims, keepdim=True)
-    var = x.var(dim=dims, keepdim=True, unbiased=False)
-    normalized = (x - mean) / (var + eps).sqrt()
-
-    min_std = math.sqrt(float(min_var)) if min_var is not None else None
-    max_std = math.sqrt(float(max_var)) if max_var is not None else None
-    std = (var + eps).sqrt()
-    if min_std is not None:
-        std = std.clamp_min(min_std)
-    if max_std is not None:
-        std = std.clamp_max(max_std)
-
-    perturbed = normalized * std + mean
-    return x + strength * (perturbed - x)
-
-
-def _log_metrics(
-    *,
-    tracer: _MetricTracer | None,
-    bend: BendSpec,
-    step: int,
-    layer_name: str,
-    x: Any,
-) -> None:
-    trace = bend.trace
-    if tracer is None or trace is None or step % trace.sample_every != 0:
-        return
-
-    metadata = {
-        "bend": bend.name,
-        "layer": layer_name,
-        "localizability": bend_localizability_label(bend),
-    }
-
-    if "norm_output_mean" in trace.metrics:
-        tracer.log(
-            step=step,
-            metric_name="norm_output_mean",
-            value=float(x.mean().item()),
-            metadata=metadata,
-        )
-
-    if "norm_output_var" in trace.metrics:
-        tracer.log(
-            step=step,
-            metric_name="norm_output_var",
-            value=float(x.var(unbiased=False).item()),
-            metadata=metadata,
-        )
-
-    if "activation_snr" in trace.metrics:
-        eps = float(bend.actuator.params.get("snr_eps", 1e-6))
-        snr = x.abs().mean() / (x.std(unbiased=False) + eps)
-        tracer.log(
-            step=step,
-            metric_name="activation_snr",
-            value=float(snr.item()),
-            metadata=metadata,
-        )
-
-
-def compile_diffusion_norm_hook(
-    plan: BendPlan,
-    tracer: _MetricTracer | None = None,
-) -> Any:
-    """Compile a BendPlan into a normalization hook callback."""
+def compile_diffusion_norm_hook(plan: BendPlan, tracer: _MetricTracer | None = None) -> Any:
+    """Compile a BendPlan into a diffusers norm hook: hook(payload)->tensor|None."""
 
     try:
         import torch
@@ -176,39 +69,51 @@ def compile_diffusion_norm_hook(
 
     bends = [bend for bend in plan.bends if bend.site.kind == "diffusion.norm"]
     if not bends:
-        return lambda x, _ctx: x
+        return lambda _payload: None
 
-    def _hook(x: Any, ctx: HookContext) -> Any:
-        result = x
+    def _hook(payload: dict[str, Any]) -> Any | None:
+        layer_name = str(payload.get("layer", ""))
+        step = int(payload.get("step", payload.get("timestep", 0)))
+        x = payload.get("tensor")
+        if x is None:
+            return None
+
+        current = x
+        modified = False
         for bend in bends:
-            if not _layer_matches(bend, ctx.layer_name) or not _step_matches(bend, ctx.step):
+            if not _layer_matches(bend, layer_name) or not _step_matches(bend, step):
                 continue
-
-            strength = _schedule_strength(bend, ctx.step)
+            strength = _schedule_strength(bend, step)
             if strength == 0:
                 continue
 
+            params = bend.actuator.params
             if bend.actuator.type == "norm_gain_drift":
-                mask_values = bend.actuator.params.get("channel_mask")
-                mask = _channel_mask_like(result, mask_values)
-                result = result * (1.0 + strength * mask)
+                scale = float(params.get("scale", 1.0))
+                current = current * (1.0 + strength * scale)
+                modified = True
             elif bend.actuator.type == "norm_bias_shift":
-                bias = float(bend.actuator.params.get("bias", 1.0))
-                result = result + strength * bias
-            elif bend.actuator.type == "norm_stat_clamp":
-                result = _apply_norm_stat_clamp(result, strength, bend.actuator.params)
+                bias = float(params.get("bias", 1.0))
+                current = current + strength * bias
+                modified = True
             elif bend.actuator.type == "activation_noise":
-                sigma = float(bend.actuator.params.get("sigma", 1.0))
-                result = result + torch.randn_like(result) * (abs(strength) * sigma)
+                sigma = float(params.get("sigma", 0.01 * abs(strength)))
+                current = current + torch.randn_like(current) * sigma
+                modified = True
 
-            _log_metrics(
-                tracer=tracer,
-                bend=bend,
-                step=ctx.step,
-                layer_name=ctx.layer_name,
-                x=result,
-            )
+            trace = bend.trace
+            if tracer is None or trace is None or step % trace.sample_every != 0:
+                continue
+            metadata = {
+                "bend": bend.name,
+                "layer": layer_name,
+                "localizability": bend_localizability_label(bend),
+            }
+            if "norm_output_mean" in trace.metrics:
+                tracer.log(step=step, metric_name="norm_output_mean", value=float(current.mean().item()), metadata=metadata)
+            if "norm_output_var" in trace.metrics:
+                tracer.log(step=step, metric_name="norm_output_var", value=float(current.var(unbiased=False).item()), metadata=metadata)
 
-        return result
+        return current if modified else None
 
     return _hook
