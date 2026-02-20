@@ -1,3 +1,13 @@
+import sys
+import types
+
+if "matplotlib" not in sys.modules:
+    matplotlib = types.ModuleType("matplotlib")
+    pyplot = types.ModuleType("matplotlib.pyplot")
+    matplotlib.pyplot = pyplot
+    sys.modules["matplotlib"] = matplotlib
+    sys.modules["matplotlib.pyplot"] = pyplot
+
 import json
 from pathlib import Path
 
@@ -48,7 +58,7 @@ def test_derived_metrics_schema_minimal_fixture(tmp_path: Path) -> None:
     assert out_path == run_dir / "analysis" / "derived_metrics.json"
     assert payload.divergence == 0.42
     assert payload.refusal_rate_delta == 0.03
-    assert payload.structural_causality_delta == 0.19
+    assert payload.structural_causality_delta == pytest.approx(0.19)
     assert "divergence" in payload.availability
     assert "divergence" in payload.normalized
 
@@ -134,3 +144,39 @@ def test_cli_analyze_all_writes_both_files(tmp_path: Path) -> None:
     )
     assert derived.divergence == 0.2
     assert classification.geopolitical_flag is True
+
+
+def test_bend_v2_trace_metrics_written_to_metrics_and_summary(tmp_path: Path) -> None:
+    run_dir = tmp_path / "trace_case"
+    _write_run_dir(
+        run_dir,
+        metrics=[
+            {"step": 0, "metric_name": "attention_entropy", "value": 0.9},
+            {"step": 0, "metric_name": "attention_entropy", "value": 1.1},
+            {"step": 1, "metric_name": "attention_entropy", "value": 0.6},
+            {"step": 1, "metric_name": "attention_entropy", "value": 0.8},
+            {"step": 0, "metric_name": "attention_topk_mass", "value": 0.55},
+            {"step": 1, "metric_name": "attention_topk_mass", "value": 0.65},
+        ],
+        config={"experiment": "trace"},
+    )
+
+    out_path = write_derived_metrics(run_dir)
+    payload = DerivedMetrics.model_validate_json(out_path.read_text(encoding="utf-8"))
+    summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
+    metric_rows = [
+        json.loads(line)
+        for line in (run_dir / "metrics.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    names = {str(row.get("metric_name", "")) for row in metric_rows}
+
+    assert payload.attention_entropy_mean_per_step == pytest.approx(0.85)
+    assert payload.attention_entropy_variance_per_step == pytest.approx(0.01)
+    assert payload.attention_concentration_topk_mass == pytest.approx(0.60)
+    assert payload.attention_entropy_recovery_index == pytest.approx(0.3)
+    assert "bend_v2_trace_metrics" in summary
+    assert "attention_entropy_mean_per_step" in names
+    assert "attention_entropy_variance_per_step" in names
+    assert "attention_concentration_topk_mass" in names
+    assert "attention_entropy_recovery_index" in names

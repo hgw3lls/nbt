@@ -1,0 +1,29 @@
+model_id: hf-internal-testing/tiny-stable-diffusion-pipe
+base_prompt: "a clean laboratory bench"
+contaminant_prompt: "a chaotic graffiti wall"
+contamination_alpha: 0.25
+num_inference_steps: 10
+guidance_scale: 7.0
+seed: 7
+
+bends:
+  - name: gate-mid-cross-attn
+    site:
+      kind: diffusion.cross_attention
+      layer_regex: "mid_block\\.attentions\\..*\\.attn2"
+      head_indices: [0]
+      timestep_start: 2
+      timestep_end: 7
+      notes: "MVP Bend v2 gate on mid-block cross-attention"
+    actuator:
+      type: attention_head_gate
+      params:
+        scale: 0.0
+        num_heads: 8
+    schedule:
+      mode: window
+      strength: 1.0
+    trace:
+      metrics: [attention_entropy]
+      sample_every: 1
+      save_raw: false

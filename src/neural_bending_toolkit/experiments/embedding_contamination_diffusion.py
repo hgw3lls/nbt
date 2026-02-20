@@ -7,6 +7,10 @@ from dataclasses import dataclass
 import numpy as np
 from pydantic import Field
 
+from neural_bending_toolkit.bends.v2 import BendPlan, BendSpec
+from neural_bending_toolkit.bends.v2_diffusion import (
+    compile_diffusion_cross_attention_hook,
+)
 from neural_bending_toolkit.experiment import Experiment, ExperimentSettings, RunContext
 
 
@@ -36,6 +40,29 @@ class EmbeddingContaminationDiffusionConfig(ExperimentSettings):
     num_inference_steps: int = Field(default=10, ge=1, le=100)
     guidance_scale: float = Field(default=7.0, ge=1.0, le=20.0)
     seed: int = 7
+    bends: list[BendSpec] | None = None
+
+
+class _RunContextTracer:
+    """Adapter exposing RunContext metric logging via tracer protocol."""
+
+    def __init__(self, context: RunContext) -> None:
+        self._context = context
+
+    def log(
+        self,
+        *,
+        step: int,
+        metric_name: str,
+        value: float | int,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
+        self._context.log_metric(
+            step=step,
+            metric_name=metric_name,
+            value=value,
+            metadata=None if metadata is None else dict(metadata),
+        )
 
 
 class EmbeddingContaminationDiffusion(Experiment):
@@ -81,6 +108,13 @@ class EmbeddingContaminationDiffusion(Experiment):
             },
         )
 
+        bend_hook = None
+        if self.config.bends:
+            bend_hook = compile_diffusion_cross_attention_hook(
+                BendPlan(bends=self.config.bends),
+                tracer=_RunContextTracer(context),
+            )
+
         baseline_output = adapter.generate(
             self.config.base_prompt,
             num_inference_steps=self.config.num_inference_steps,
@@ -93,6 +127,7 @@ class EmbeddingContaminationDiffusion(Experiment):
             guidance_scale=self.config.guidance_scale,
             generator_seed=self.config.seed,
             embedding_hook=lambda _emb, _ctx: mixed_emb,
+            cross_attention_hook=bend_hook,
         )
 
         base_arr = self._image_to_array(baseline_output.images[0])

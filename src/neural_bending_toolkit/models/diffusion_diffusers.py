@@ -125,6 +125,7 @@ class HookedCrossAttentionProcessor:
                 "step": step_idx,
                 "query": query,
                 "key": key,
+                "value": value,
                 "attention_probs": attention_probs,
             }
             modified = self.hook(payload)
@@ -135,6 +136,7 @@ class HookedCrossAttentionProcessor:
                     )
                 query = modified.get("query", query)
                 key = modified.get("key", key)
+                value = modified.get("value", value)
                 attention_probs = modified.get("attention_probs", attention_probs)
 
         hidden_states = attn.batch_to_head_dim(attention_probs @ value)

@@ -91,6 +91,13 @@ Generate analysis reports from existing runs with `nbt report <run_dir>`.
 Geopolitical suite: `nbt geopolitical describe` and `nbt geopolitical run --config configs/geopolitical.example.yaml`.
 
 
+
+## Bend v2: Architectural Metastability Interface
+
+Bend v2 formalizes an execution-layer contract for interventions defined by **Site · Actuator · Schedule · Trace**. See [`docs/bend_v2_spec.md`](docs/bend_v2_spec.md).
+
+Sampler sweeps are stratigraphy; Bend v2 is execution-layer intervention.
+
 ## Starter patches
 
 Starter modular patches live under `patches/`, including `patches/starter_8_bends_ab.json`.
