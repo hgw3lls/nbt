@@ -14,6 +14,7 @@ class SiteSpec(BaseModel):
     kind: Literal[
         "diffusion.cross_attention",
         "diffusion.norm",
+        "diffusion.residual",
         "llm.attention",
         "gan.layer",
         "audio.attention",
@@ -101,6 +102,9 @@ class ActuatorSpec(BaseModel):
         "norm_bias_shift",
         "norm_stat_clamp",
         "activation_noise",
+        "residual_echo",
+        "residual_leak",
+        "residual_clamp",
         "noop",
     ]
     params: dict[str, Any] = Field(default_factory=dict)
@@ -115,6 +119,7 @@ class TraceSpec(BaseModel):
             "attention_topk_mass",
             "latent_delta_l2",
             "activation_norm",
+            "activation_delta_norm",
             "norm_stats",
             "norm_output_mean",
             "norm_output_var",

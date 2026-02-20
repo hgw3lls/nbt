@@ -24,6 +24,9 @@ from neural_bending_toolkit.bends.v2_diffusion import (
     compile_diffusion_cross_attention_hook,
 )
 from neural_bending_toolkit.bends.v2_diffusion_norm import compile_diffusion_norm_hook
+from neural_bending_toolkit.bends.v2_diffusion_residual import (
+    compile_diffusion_residual_hook,
+)
 
 __all__ = [
     "ActuatorSpec",
@@ -32,6 +35,7 @@ __all__ = [
     "bend_localizability_label",
     "compile_diffusion_cross_attention_hook",
     "compile_diffusion_norm_hook",
+    "compile_diffusion_residual_hook",
     "AttractorSeeder",
     "AttentionConflictInjector",
     "AttentionHeadScaler",

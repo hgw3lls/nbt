@@ -35,6 +35,7 @@ Each run writes to:
 - `embedding-contamination-diffusion` experiment for diffusion embedding interventions
 - `gan-stratigraphy-edges` experiment for truncation-edge GAN analysis
 - `audio-inter-head-drift` experiment for MusicGen/proxy drift analysis
+- `residual-echo-chamber-diffusion` flagship experiment for residual-stream temporal lock-in/recovery
 
 Example config:
 
@@ -135,6 +136,31 @@ nbt run norm-drift-collapse-recovery-diffusion -c configs/norm-drift-collapse-re
 - `comparisons/norm_metrics_comparison.json`
 - `comparisons/norm_variance_over_steps.png`
 - `summary.json` (collapse/recovery/stability + norm metastability tags)
+
+
+### Flagship: Residual Echo Chamber
+
+Run with:
+
+```bash
+nbt run residual-echo-chamber-diffusion -c configs/residual-echo-chamber-diffusion.example.yaml
+```
+
+**Temporal limit targeted**
+
+- Diffusion trajectories can become temporally self-referential: repeated residual feedback narrows novelty and locks motifs into a stable but brittle attractor.
+
+**Recursion/feedback as stabilization mechanism**
+
+- **Echo chamber condition** applies `diffusion.residual` + `residual_echo` with a ramped schedule (alpha `0 -> 0.25`, steps `10 -> 25`) to reinforce prior-step activations.
+- **Echo breaker condition** adds a late counter-bend (`residual_clamp` or `residual_leak`, steps `26 -> 30`) to dampen runaway reinforcement and reopen dynamics.
+
+**What to inspect**
+
+- `conditions/{baseline,echo,echo_breaker}/...`
+- `comparisons/residual_metrics_comparison.json`
+- `comparisons/delta_norm_over_steps.png`
+- `summary.json` (lock-in/recovery metrics, novelty proxies, tags)
 
 
 Geopolitical suite: `nbt geopolitical describe` and `nbt geopolitical run --config configs/geopolitical.example.yaml`.
