@@ -9,6 +9,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
+import numpy as np
 import yaml
 from pydantic import BaseModel, Field
 
@@ -20,6 +21,10 @@ DERIVED_METRIC_KEYS = [
     "attractor_density_delta",
     "structural_causality_delta",
     "cross_task_consistency",
+    "attention_entropy_mean_per_step",
+    "attention_entropy_variance_per_step",
+    "attention_concentration_topk_mass",
+    "attention_entropy_recovery_index",
 ]
 
 
@@ -35,6 +40,10 @@ class DerivedMetrics(BaseModel):
     attractor_density_delta: float | None = None
     structural_causality_delta: float | None = None
     cross_task_consistency: float | None = None
+    attention_entropy_mean_per_step: float | None = None
+    attention_entropy_variance_per_step: float | None = None
+    attention_concentration_topk_mass: float | None = None
+    attention_entropy_recovery_index: float | None = None
     availability: dict[str, bool] = Field(default_factory=dict)
     normalized: dict[str, float | None] = Field(default_factory=dict)
 
@@ -97,6 +106,70 @@ def _aggregate_metric_stream(rows: list[dict[str, Any]]) -> dict[str, float]:
         aggregate[key] = float(sum(values) / len(values))
         aggregate[f"{key}.latest"] = float(values[-1])
     return aggregate
+
+
+def _metric_rows_by_step(
+    rows: list[dict[str, Any]],
+    *,
+    metric_name: str,
+) -> dict[int, list[float]]:
+    by_step: dict[int, list[float]] = defaultdict(list)
+    lowered_name = metric_name.lower()
+    for row in rows:
+        if str(row.get("metric_name", "")).strip().lower() != lowered_name:
+            continue
+        step = row.get("step")
+        value = row.get("value")
+        if not isinstance(step, int) or not isinstance(value, (int, float)):
+            continue
+        by_step[step].append(float(value))
+    return dict(by_step)
+
+
+def _mean_per_step(by_step: dict[int, list[float]]) -> dict[int, float]:
+    return {step: float(np.mean(values)) for step, values in by_step.items() if values}
+
+
+def _variance_per_step(by_step: dict[int, list[float]]) -> dict[int, float]:
+    return {step: float(np.var(values)) for step, values in by_step.items() if values}
+
+
+def _recovery_index(entropy_step_means: dict[int, float]) -> float | None:
+    if len(entropy_step_means) < 2:
+        return None
+    ordered_steps = sorted(entropy_step_means)
+    values = [entropy_step_means[step] for step in ordered_steps]
+    third = max(1, len(values) // 3)
+    early = float(np.mean(values[:third]))
+    late = float(np.mean(values[-third:]))
+    return float(abs(late - early))
+
+
+def _topk_mass_from_heatmaps(run_dir: Path, k: int = 5) -> float | None:
+    files = sorted((run_dir / "artifacts").glob("*_step_*.npy"))
+    masses: list[float] = []
+    for path in files:
+        try:
+            arr = np.load(path)
+        except Exception:
+            continue
+        if arr.ndim < 1 or arr.size == 0:
+            continue
+        probs = np.asarray(arr, dtype=np.float64)
+        if probs.ndim == 1:
+            probs = probs[None, :]
+        probs = probs.reshape(-1, probs.shape[-1])
+        row_sums = probs.sum(axis=1, keepdims=True)
+        valid = row_sums.squeeze(-1) > 0
+        if not np.any(valid):
+            continue
+        normed = probs[valid] / row_sums[valid]
+        kk = min(k, normed.shape[-1])
+        top = np.partition(normed, normed.shape[-1] - kk, axis=1)[:, -kk:]
+        masses.append(float(np.mean(top.sum(axis=1))))
+    if not masses:
+        return None
+    return float(np.mean(masses))
 
 
 def robust_median_iqr(values: list[float]) -> tuple[float, float]:
@@ -162,7 +235,6 @@ def _build_numeric_source(run_dir: Path) -> dict[str, float]:
 
     source = {**config, **summary, **metrics}
 
-    # Add suffix-stripped aliases for "foo.latest" keys.
     latest_aliases = {
         key[:-7]: value for key, value in source.items() if key.endswith(".latest")
     }
@@ -174,6 +246,7 @@ def compute_derived_metrics(run_dir: Path) -> DerivedMetrics:
     """Compute standardized derived metrics for a run directory."""
     run_dir = Path(run_dir)
     source = _build_numeric_source(run_dir)
+    metric_rows = _read_jsonl(run_dir / "metrics.jsonl")
 
     divergence = _first_numeric(
         source,
@@ -256,6 +329,33 @@ def compute_derived_metrics(run_dir: Path) -> DerivedMetrics:
         ],
     )
 
+    entropy_step_means = _mean_per_step(
+        _metric_rows_by_step(metric_rows, metric_name="attention_entropy")
+    )
+    entropy_step_vars = _variance_per_step(
+        _metric_rows_by_step(metric_rows, metric_name="attention_entropy")
+    )
+    topk_by_step = _mean_per_step(
+        _metric_rows_by_step(metric_rows, metric_name="attention_topk_mass")
+    )
+
+    attention_entropy_mean_per_step = (
+        float(np.mean(list(entropy_step_means.values())))
+        if entropy_step_means
+        else None
+    )
+    attention_entropy_variance_per_step = (
+        float(np.mean(list(entropy_step_vars.values())))
+        if entropy_step_vars
+        else None
+    )
+    attention_concentration_topk_mass = (
+        float(np.mean(list(topk_by_step.values())))
+        if topk_by_step
+        else _topk_mass_from_heatmaps(run_dir)
+    )
+    attention_entropy_recovery_index = _recovery_index(entropy_step_means)
+
     metrics_payload = DerivedMetrics(
         run_dir=str(run_dir),
         generated_at=_timestamp(),
@@ -266,6 +366,10 @@ def compute_derived_metrics(run_dir: Path) -> DerivedMetrics:
         attractor_density_delta=attractor_density_delta,
         structural_causality_delta=structural_causality_delta,
         cross_task_consistency=cross_task_consistency,
+        attention_entropy_mean_per_step=attention_entropy_mean_per_step,
+        attention_entropy_variance_per_step=attention_entropy_variance_per_step,
+        attention_concentration_topk_mass=attention_concentration_topk_mass,
+        attention_entropy_recovery_index=attention_entropy_recovery_index,
     )
 
     observed_values = [
@@ -278,6 +382,10 @@ def compute_derived_metrics(run_dir: Path) -> DerivedMetrics:
             attractor_density_delta,
             structural_causality_delta,
             cross_task_consistency,
+            attention_entropy_mean_per_step,
+            attention_entropy_variance_per_step,
+            attention_concentration_topk_mass,
+            attention_entropy_recovery_index,
         ]
         if value is not None
     ]
@@ -292,6 +400,67 @@ def compute_derived_metrics(run_dir: Path) -> DerivedMetrics:
     return metrics_payload
 
 
+def _append_trace_metric_records(run_dir: Path, derived: DerivedMetrics) -> None:
+    metrics_path = run_dir / "metrics.jsonl"
+    if not metrics_path.exists():
+        return
+
+    existing = _read_jsonl(metrics_path)
+    existing_names = {
+        str(row.get("metric_name", "")).strip().lower() for row in existing
+    }
+
+    payloads = [
+        (
+            "attention_entropy_mean_per_step",
+            derived.attention_entropy_mean_per_step,
+        ),
+        (
+            "attention_entropy_variance_per_step",
+            derived.attention_entropy_variance_per_step,
+        ),
+        (
+            "attention_concentration_topk_mass",
+            derived.attention_concentration_topk_mass,
+        ),
+        (
+            "attention_entropy_recovery_index",
+            derived.attention_entropy_recovery_index,
+        ),
+    ]
+
+    lines: list[str] = []
+    for metric_name, value in payloads:
+        if value is None or metric_name.lower() in existing_names:
+            continue
+        record = {
+            "timestamp": _timestamp(),
+            "step": -1,
+            "metric_name": metric_name,
+            "value": value,
+            "metadata": {"source": "derived_metrics"},
+        }
+        lines.append(json.dumps(record))
+
+    if lines:
+        with metrics_path.open("a", encoding="utf-8") as handle:
+            handle.write("\n".join(lines) + "\n")
+
+
+def _write_run_summary(run_dir: Path, derived: DerivedMetrics) -> None:
+    summary_path = run_dir / "summary.json"
+    summary = _read_json(summary_path)
+    summary["bend_v2_trace_metrics"] = {
+        "attention_entropy_mean_per_step": derived.attention_entropy_mean_per_step,
+        "attention_entropy_variance_per_step": (
+            derived.attention_entropy_variance_per_step
+        ),
+        "attention_concentration_topk_mass": derived.attention_concentration_topk_mass,
+        "attention_entropy_recovery_index": derived.attention_entropy_recovery_index,
+    }
+    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+
 def write_derived_metrics(run_dir: Path) -> Path:
     """Compute and persist derived metrics JSON in run_dir/analysis/."""
     run_dir = Path(run_dir)
@@ -301,4 +470,7 @@ def write_derived_metrics(run_dir: Path) -> Path:
     derived = compute_derived_metrics(run_dir)
     out_path = analysis_dir / "derived_metrics.json"
     out_path.write_text(derived.model_dump_json(indent=2), encoding="utf-8")
+
+    _append_trace_metric_records(run_dir, derived)
+    _write_run_summary(run_dir, derived)
     return out_path

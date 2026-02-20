@@ -145,6 +145,27 @@ class Experiment(ABC):
             return []
         return sorted(path for path in artifacts_dir.glob("**/*") if path.is_file())
 
+    @staticmethod
+    def _has_metric_name(run_dir: Path, metric_name: str) -> bool:
+        metrics_path = run_dir / "metrics.jsonl"
+        if not metrics_path.exists():
+            return False
+
+        target = metric_name.strip().lower()
+        for line in metrics_path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(record, dict):
+                continue
+            name = str(record.get("metric_name", "")).strip().lower()
+            if name == target:
+                return True
+        return False
+
     def recommended_figure_specs(self, run_dir: Path) -> list[dict[str, Any]]:
         """Return recommended figure specs for the run (override in subclasses)."""
         run_dir = Path(run_dir)
@@ -176,7 +197,8 @@ class Experiment(ABC):
         ]
 
         bend_tag = str(classification.get("bend_tag", ""))
-        if bend_tag == "disruptive":
+        has_attention_entropy = self._has_metric_name(run_dir, "attention_entropy")
+        if bend_tag == "disruptive" or has_attention_entropy:
             specs.append(
                 {
                     "figure_id": f"{run_dir.name}_attention_entropy",

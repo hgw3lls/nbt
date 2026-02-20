@@ -1,0 +1,27 @@
+bends:
+  - name: "cross-attn-entropy-probe"
+    tags: ["bend_v2", "architectural_bend", "diffusion"]
+    site:
+      kind: "diffusion.cross_attention"
+      layer_regex: "up_blocks\\.[12]\\.attentions\\.[0-9]+"
+      head_indices: [0, 3, 7]
+      timestep_start: 100
+      timestep_end: 300
+      notes: "MVP seam targeting Diffusers cross-attn hooks"
+    actuator:
+      type: "attention_probs_temperature"
+      params:
+        temperature: 1.15
+    schedule:
+      mode: "ramp"
+      strength: 1.0
+      strength_start: 0.0
+      strength_end: 1.0
+      condition: "attention_entropy < 1.2"
+    trace:
+      metrics:
+        - "attention_entropy"
+        - "attention_topk_mass"
+        - "latent_delta_l2"
+      sample_every: 5
+      save_raw: false

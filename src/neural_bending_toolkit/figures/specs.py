@@ -72,4 +72,4 @@ def save_figure_spec(spec: FigureSpec, path: Path) -> None:
     """Save a FigureSpec as YAML."""
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
-        yaml.safe_dump(spec.model_dump(mode="python"), handle, sort_keys=False)
+        yaml.safe_dump(spec.model_dump(mode="json"), handle, sort_keys=False)
