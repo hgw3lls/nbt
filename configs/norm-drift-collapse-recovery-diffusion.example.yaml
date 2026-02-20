@@ -1,0 +1,23 @@
+# Norm Drift Collapse/Recovery Diffusion (Bend v2 norm hooks)
+model_id: hf-internal-testing/tiny-stable-diffusion-pipe
+prompt:
+  - "a cinematic city skyline at dusk"
+negative_prompt: "blurry, low quality"
+seed: 11
+num_inference_steps: 24
+guidance_scale: 7.5
+samples_per_condition: 3
+
+# Layer targeting for normalization hooks
+norm_layer_regex: "(norm|ln|layernorm)"
+
+# Mid-window collapse intervention
+collapse_timestep_start: 8
+collapse_timestep_end: 14
+collapse_gain_strength: 1.5
+collapse_clamp_strength: 1.0
+
+# Late-window recovery intervention
+recovery_timestep_start: 16
+recovery_timestep_end: 22
+recovery_gain_strength: -0.35

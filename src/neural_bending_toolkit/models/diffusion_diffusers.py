@@ -4,12 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from neural_bending_toolkit.models.torch_device import normalize_torch_device
+from neural_bending_toolkit.models.hooks import (
+    HookContext,
+    register_forward_hook,
+    register_forward_pre_hook,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class _TorchXPUStub:
@@ -43,6 +51,77 @@ class DiffusionGenerationResult:
 
 EmbeddingHook = Callable[[Any, dict[str, Any]], Any]
 CrossAttentionHook = Callable[[dict[str, Any]], dict[str, Any] | None]
+NormHook = Callable[[Any, HookContext], Any]
+
+
+class _NormHookManager:
+    """Manage lifecycle and safety behavior for normalization hooks."""
+
+    def __init__(self, hook: NormHook, get_step: Callable[[], int]) -> None:
+        self._hook = hook
+        self._get_step = get_step
+        self._handles: list[Any] = []
+        self._enabled = True
+
+    def register_module(self, layer_name: str, module: Any) -> None:
+        pre_handle = register_forward_pre_hook(
+            module,
+            self._make_pre_hook(layer_name),
+        )
+        self._handles.append(pre_handle)
+        post_handle = register_forward_hook(
+            module,
+            self._make_post_hook(layer_name),
+        )
+        self._handles.append(post_handle)
+
+    def remove_all(self) -> None:
+        while self._handles:
+            handle = self._handles.pop()
+            handle.remove()
+
+    def _disable_with_warning(self, exc: Exception, layer_name: str) -> None:
+        if self._enabled:
+            logger.warning(
+                "Disabling normalization hooks after error in %s: %s",
+                layer_name,
+                exc,
+            )
+            self._enabled = False
+            self.remove_all()
+
+    def _invoke_hook(self, x: Any, layer_name: str, kind: str) -> Any:
+        if not self._enabled:
+            return x
+        try:
+            ctx = HookContext(
+                layer_name=layer_name,
+                step=self._get_step(),
+                metadata={"hook_kind": kind},
+            )
+            updated = self._hook(x, ctx)
+        except Exception as exc:  # pragma: no cover - validated in behavior tests
+            self._disable_with_warning(exc, layer_name)
+            return x
+        return x if updated is None else updated
+
+    def _make_pre_hook(self, layer_name: str) -> Callable[..., Any]:
+        def _pre_hook(_module: Any, args: tuple[Any, ...]) -> tuple[Any, ...]:
+            if not args:
+                return args
+            x = args[0]
+            updated = self._invoke_hook(x, layer_name, kind="pre")
+            if updated is x:
+                return args
+            return (updated, *args[1:])
+
+        return _pre_hook
+
+    def _make_post_hook(self, layer_name: str) -> Callable[..., Any]:
+        def _post_hook(_module: Any, _args: tuple[Any, ...], output: Any) -> Any:
+            return self._invoke_hook(output, layer_name, kind="post")
+
+        return _post_hook
 
 
 class HookedCrossAttentionProcessor:
@@ -194,6 +273,17 @@ class DiffusersStableDiffusionAdapter:
         self._pipe = self._pipe.to(self.device)
         self.current_step = 0
 
+    def _iter_normalization_modules(self) -> list[tuple[str, Any]]:
+        torch = self._torch
+        norm_types = (torch.nn.GroupNorm, torch.nn.LayerNorm)
+        modules: list[tuple[str, Any]] = []
+        for name, module in self._pipe.unet.named_modules():
+            if not name:
+                continue
+            if isinstance(module, norm_types) or "LayerNorm" in type(module).__name__:
+                modules.append((name, module))
+        return modules
+
     def _encode_prompt(self, prompt: str) -> Any:
         torch = self._torch
 
@@ -217,6 +307,7 @@ class DiffusersStableDiffusionAdapter:
         guidance_scale: float = 7.5,
         embedding_hook: EmbeddingHook | None = None,
         cross_attention_hook: CrossAttentionHook | None = None,
+        norm_hook: NormHook | None = None,
         generator_seed: int | None = None,
     ) -> DiffusionGenerationResult:
         torch = self._torch
@@ -237,6 +328,16 @@ class DiffusersStableDiffusionAdapter:
             )
         self._pipe.unet.set_attn_processor(processor_map)
 
+        self.current_step = 0
+        norm_manager: _NormHookManager | None = None
+        if norm_hook is not None:
+            norm_manager = _NormHookManager(
+                hook=norm_hook,
+                get_step=lambda: self.current_step,
+            )
+            for layer_name, module in self._iter_normalization_modules():
+                norm_manager.register_module(layer_name, module)
+
         generator = None
         if generator_seed is not None:
             generator = torch.Generator(device=self.device).manual_seed(generator_seed)
@@ -251,15 +352,19 @@ class DiffusersStableDiffusionAdapter:
             self.current_step = step
             return callback_kwargs
 
-        result = self._pipe(
-            prompt_embeds=prompt_embeds,
-            negative_prompt=negative_prompt,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale,
-            generator=generator,
-            callback_on_step_end=_step_callback,
-            callback_on_step_end_tensor_inputs=["latents"],
-        )
+        try:
+            result = self._pipe(
+                prompt_embeds=prompt_embeds,
+                negative_prompt=negative_prompt,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                generator=generator,
+                callback_on_step_end=_step_callback,
+                callback_on_step_end_tensor_inputs=["latents"],
+            )
+        finally:
+            if norm_manager is not None:
+                norm_manager.remove_all()
 
         return DiffusionGenerationResult(
             images=result.images,

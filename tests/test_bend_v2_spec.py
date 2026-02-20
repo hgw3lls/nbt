@@ -141,3 +141,25 @@ def test_localizability_label_format() -> None:
         label
         == "diffusion.cross_attention: layer=down_blocks.*attn2 head=[0,3] steps=2..6"
     )
+
+
+def test_norm_site_and_actuator_validate() -> None:
+    plan = BendPlan.model_validate(
+        {
+            "bends": [
+                {
+                    "name": "norm",
+                    "site": {
+                        "kind": "diffusion.norm",
+                        "allow_all_layers": True,
+                    },
+                    "actuator": {"type": "norm_gain_drift", "params": {}},
+                    "schedule": {"mode": "constant", "strength": 0.5},
+                    "trace": {"metrics": ["norm_output_mean", "activation_snr"]},
+                }
+            ]
+        }
+    )
+
+    assert plan.bends[0].site.kind == "diffusion.norm"
+    assert plan.bends[0].actuator.type == "norm_gain_drift"

@@ -13,6 +13,7 @@ class SiteSpec(BaseModel):
 
     kind: Literal[
         "diffusion.cross_attention",
+        "diffusion.norm",
         "llm.attention",
         "gan.layer",
         "audio.attention",
@@ -96,6 +97,10 @@ class ActuatorSpec(BaseModel):
         "qk_rotate",
         "kv_noise",
         "embedding_project",
+        "norm_gain_drift",
+        "norm_bias_shift",
+        "norm_stat_clamp",
+        "activation_noise",
         "noop",
     ]
     params: dict[str, Any] = Field(default_factory=dict)
@@ -111,6 +116,9 @@ class TraceSpec(BaseModel):
             "latent_delta_l2",
             "activation_norm",
             "norm_stats",
+            "norm_output_mean",
+            "norm_output_var",
+            "activation_snr",
         ]
     ]
     sample_every: int = Field(default=1, ge=1)
