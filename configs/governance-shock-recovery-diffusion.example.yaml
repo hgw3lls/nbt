@@ -1,0 +1,117 @@
+# Governance Shock Recovery Diffusion (Bend v2)
+#
+# Targeted limit:
+#   Concentrated cross-attention dynamics can become brittle when specific heads
+#   are over-suppressed or destabilized in a mid-denoising window.
+#
+# What counts as recovery:
+#   In condition C (shock + counter), downstream metrics (for example
+#   attention_entropy and attention_topk_mass trajectories) should partially
+#   return toward baseline relative to shock-only.
+
+model_id: hf-internal-testing/tiny-stable-diffusion-pipe
+prompt:
+  - "a civic assembly debating emergency housing policy, documentary style"
+negative_prompt: "blurry, low quality, text artifacts"
+seed: 7
+num_inference_steps: 30
+guidance_scale: 7.5
+height: 256
+width: 256
+samples_per_condition: 4
+
+# Comparison toggles for A/B/C metrics in run_dir/comparisons/metrics_comparison.json
+comparisons:
+  baseline_vs_shock: true
+  baseline_vs_shock_counter: true
+  shock_vs_shock_counter: true
+
+# B) shock-only BendPlan (architectural bends)
+# Mid-window intervention: steps 8..14 of 30.
+shock:
+  - name: shock_gate_selected_heads
+    site:
+      kind: diffusion.cross_attention
+      layer_regex: "(attn2|cross[_-]?attn)"
+      head_indices: [0, 3, 7]
+      timestep_start: 8
+      timestep_end: 14
+      notes: "Hard-gate a minority subset of cross-attention heads during the shock window."
+    actuator:
+      type: attention_head_gate
+      params:
+        scale: 0.15
+        num_heads: 8
+    schedule:
+      mode: window
+      strength: 1.0
+    trace:
+      metrics: [attention_entropy, attention_topk_mass]
+      sample_every: 1
+      save_raw: false
+
+  - name: shock_attention_temperature
+    site:
+      kind: diffusion.cross_attention
+      layer_regex: "(attn2|cross[_-]?attn)"
+      head_indices: [0, 3, 7]
+      timestep_start: 8
+      timestep_end: 14
+      notes: "Sharpen selected-head attention to increase decisiveness under governance shock."
+    actuator:
+      type: attention_probs_temperature
+      params:
+        temperature: 0.75
+        num_heads: 8
+    schedule:
+      mode: window
+      strength: 1.0
+    trace:
+      metrics: [attention_entropy, attention_topk_mass]
+      sample_every: 1
+      save_raw: false
+
+  - name: shock_qk_rotation
+    site:
+      kind: diffusion.cross_attention
+      layer_regex: "(attn2|cross[_-]?attn)"
+      head_indices: [0, 3, 7]
+      timestep_start: 8
+      timestep_end: 14
+      notes: "Small geometric perturbation to q/k axes to emulate representational dissonance."
+    actuator:
+      type: qk_rotate
+      params:
+        angle: 0.06
+        num_heads: 8
+    schedule:
+      mode: window
+      strength: 1.0
+    trace:
+      metrics: [attention_entropy, attention_topk_mass]
+      sample_every: 1
+      save_raw: false
+
+# C) shock+counter BendPlan ("minority report")
+# A mild late-window flattening intended to restore plural conditioning after shock.
+counter:
+  - name: minority_report_late_flatten
+    site:
+      kind: diffusion.cross_attention
+      layer_regex: "(attn2|cross[_-]?attn)"
+      head_indices: [0, 3, 7]
+      timestep_start: 18
+      timestep_end: 28
+      notes: "Late counter-coherence: soften peaked attention so alternative signals can re-enter."
+    actuator:
+      type: attention_probs_temperature
+      params:
+        temperature: 1.15
+        num_heads: 8
+    schedule:
+      mode: window
+      strength: 0.5
+    trace:
+      metrics: [attention_entropy, attention_topk_mass]
+      sample_every: 1
+      save_raw: false

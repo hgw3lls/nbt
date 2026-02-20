@@ -84,6 +84,28 @@ Install with optional extras: `pip install -e ".[audio]"`.
 Eight bend-family experiments are included (embedding contamination, corpus stratigraphy, inter-head drift, governance dissonance, residual distortion, norm perturbation, justice reweighting, justice attractors).
 Each run emits baseline-vs-bent comparisons, metrics + qualitative samples, and a `theory_memo.md`.
 
+### Flagship experiment: governance-shock-recovery-diffusion
+
+Run with:
+
+```bash
+nbt run governance-shock-recovery-diffusion -c configs/governance-shock-recovery-diffusion.example.yaml
+```
+
+This experiment demonstrates metastability bending by applying Bend v2 **Site · Actuator · Schedule · Trace** interventions across three conditions: `baseline`, `shock`, and `shock_counter`.
+
+- **Site**: diffusion cross-attention (`attn2`/cross-attn layer regex + targeted heads)
+- **Actuator**: head gating, attention temperature, and qk rotation
+- **Schedule**: mid-window shock with late-window counter intervention
+- **Trace**: attention entropy/top-k mass and downstream metastability tags
+
+Key artifacts to inspect:
+
+- `conditions/{baseline,shock,shock_counter}/...`
+- `comparisons/metrics_comparison.json`
+- `comparisons/comparison_report.json`
+- `comparisons/entropy_over_steps.png`
+- `summary.json` (metastability + tags)
 
 Generate analysis reports from existing runs with `nbt report <run_dir>`.
 
